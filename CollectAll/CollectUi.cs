@@ -226,7 +226,8 @@ namespace CollectAll
 
             ChestFinder.Found found = ChestFinder.ChestsAround(target, player, Plugin.Radius.Value, example.m_shared.m_name);
             CollectResult result = Collector.Collect(target.GetInventory(), example, found.Sources,
-                (what, e) => Plugin.Log.LogWarning($"{what}: {e.GetType().Name}: {e.Message}"));
+                (what, e) => Plugin.Log.LogWarning($"{what}: {e.GetType().Name}: {e.Message}"),
+                Plugin.SkipBiggerPiles.Value);
 
             Message(Describe(result, found.NotOwned, Plugin.Radius.Value, Localize(result.ItemName)));
             if (result.Moved > 0)
@@ -245,10 +246,17 @@ namespace CollectAll
             {
                 text = $"No room in this chest for more {name}";
             }
+            else if (r.BiggerSkipped > 0)
+            {
+                text = $"Other chests have more {name} than this one\nCollect into the biggest pile instead";
+            }
             else
             {
                 text = $"No other {name} in chests within {radius:0} m";
             }
+
+            if (r.Moved > 0 && r.BiggerSkipped > 0)
+                text += $"\n{r.BiggerSkipped} chest{(r.BiggerSkipped == 1 ? "" : "s")} with more {name} left alone";
 
             int skipped = r.BusySkipped + notOwned;
             if (skipped > 0) text += $"\n{skipped} chest{(skipped == 1 ? "" : "s")} skipped (open, or another player's)";

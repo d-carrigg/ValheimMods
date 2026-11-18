@@ -12,12 +12,13 @@ namespace CollectAll
     {
         public const string Guid = "local.collectall";
         public const string Name = "CollectAll";
-        public const string Version = "1.0.2";
+        public const string Version = "1.0.3";
 
         internal static ManualLogSource Log;
 
         internal static ConfigEntry<float> Radius;
         internal static ConfigEntry<bool> AltClickShortcut;
+        internal static ConfigEntry<bool> SkipBiggerPiles;
         internal static ConfigEntry<bool> ClaimChestOwnership;
         internal static ConfigEntry<string> ButtonText;
         internal static ConfigEntry<float> ButtonOffsetX;
@@ -34,6 +35,10 @@ namespace CollectAll
                 new AcceptableValueRange<float>(2f, 100f)));
             AltClickShortcut = Config.Bind("General", "AltClickShortcut", true,
                 "Alt + click an item in the chest to collect it straight away, without pressing the button first.");
+            SkipBiggerPiles = Config.Bind("General", "SkipBiggerPiles", true,
+                "Bigger pile wins: never take from a chest that holds more of the item than the chest you're collecting " +
+                "into. Items only flow toward your biggest pile, so collecting in two chests can't shuffle them back and " +
+                "forth. Turn off to pull from every chest regardless (e.g. to move a whole stash into a new chest).");
             ClaimChestOwnership = Config.Bind("General", "ClaimChestOwnership", false,
                 "Multiplayer only. Off: only chests your game controls are collected from (always true in single player, " +
                 "and usually when nobody else is nearby). On: also take control of other chests that hold the item (never " +

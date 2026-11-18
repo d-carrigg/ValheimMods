@@ -10,7 +10,9 @@ A BepInEx mod for Valheim. Open a chest, click **Collect**, click an item: every
 
 1. Open the chest you want things gathered into.
 2. Click **Collect** in the top-right corner of the chest panel, next to the chest's name. It changes to **Pick item...**
-3. Click an item, in the chest or in your own inventory. All other stacks of that item (any quality) in chests within 30 m move into this chest. The nearest chests are emptied first, and existing stacks are topped up before new slots are used.
+3. Click an item, in the chest or in your own inventory. All other stacks of that item (any quality) in chests within 30 m move into this chest. Smaller piles are taken first, and existing stacks are topped up before new slots are used.
+
+**Bigger pile wins** (on by default): a chest that holds *more* of the item than the one you're collecting into is left alone. Items only ever flow toward your biggest pile, so collecting in two chests in turn can't shuffle them back and forth. To gather scattered piles, open the chest with the most and collect there.
 
 Shortcut: **Alt + click** an item in the chest does it in one step.
 
@@ -19,6 +21,7 @@ Right-click or Esc cancels pick mode. The message in the middle of the screen sa
 - `Collected 120 Fine wood from 3 chests`
 - `Chest is full - 45 more still elsewhere`
 - `No other Fine wood in chests within 30 m`
+- `Other chests have more Fine wood than this one`
 - `2 chests skipped (open, or another player's)`
 
 Your own inventory is never touched; only other chests are emptied.
@@ -40,6 +43,7 @@ The button is pinned to the top-right corner of the chest panel, so it stays put
 |---|---|---|
 | `Radius` | 30 | How far from the open chest to look (m) |
 | `AltClickShortcut` | on | Alt + click collects straight away |
+| `SkipBiggerPiles` | on | Bigger pile wins (see above). Turn off to pull from every chest, e.g. to move a whole stash into a new chest |
 | `ClaimChestOwnership` | off | Multiplayer only, see above |
 | `Button.Text` | Collect | Button label |
 | `Button.OffsetX` / `OffsetY` | 0 | Nudge the button if it overlaps another mod's button |

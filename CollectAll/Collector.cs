@@ -30,6 +30,7 @@ namespace CollectAll
         public int ChestsTakenFrom;
         public int LeftBehind;           // units still in other chests (target ran out of room)
         public int BusySkipped;          // chests with the item that were open, so left alone
+        public int BiggerSkipped;        // chests holding more of the item than the target, so left alone
         public int Errors;
         public bool TargetFull => LeftBehind > 0;
     }
@@ -43,10 +44,16 @@ namespace CollectAll
     {
         /// <summary>
         /// Moves every item named like <paramref name="example"/> (any quality) from the sources
-        /// into <paramref name="target"/>, nearest chest first, until the target is full.
+        /// into <paramref name="target"/> until the target is full. Smaller piles go first (then
+        /// nearer chests), so the target grows as it goes.
         /// </summary>
+        /// <param name="skipBiggerPiles">
+        /// "Bigger pile wins": never take from a chest that holds more of the item than the target
+        /// does at that moment. Items then only flow toward the biggest pile, so collecting in
+        /// two chests in turn can never shuffle items back and forth.
+        /// </param>
         public static CollectResult Collect(Inventory target, ItemDrop.ItemData example, IEnumerable<CollectSource> sources,
-            Action<string, Exception> warn)
+            Action<string, Exception> warn, bool skipBiggerPiles = true)
         {
             var result = new CollectResult { ItemName = example?.m_shared?.m_name };
             if (target == null || result.ItemName == null) return result;
@@ -57,24 +64,35 @@ namespace CollectAll
                 try { warn?.Invoke(what, e); } catch { }
             };
 
-            foreach (CollectSource source in sources.Where(s => s?.Inventory != null && !ReferenceEquals(s.Inventory, target))
-                                                    .OrderBy(s => s.Distance))
+            // Work out what each chest holds first, so smaller piles can be taken first.
+            var piles = new List<KeyValuePair<CollectSource, List<ItemDrop.ItemData>>>();
+            foreach (CollectSource source in sources.Where(s => s?.Inventory != null && !ReferenceEquals(s.Inventory, target)))
             {
-                List<ItemDrop.ItemData> matches;
                 try
                 {
-                    matches = source.Inventory.GetAllItems().Where(i => i.m_shared.m_name == result.ItemName).ToList();
+                    var matches = source.Inventory.GetAllItems().Where(i => i.m_shared.m_name == result.ItemName).ToList();
+                    if (matches.Count > 0) piles.Add(new KeyValuePair<CollectSource, List<ItemDrop.ItemData>>(source, matches));
                 }
                 catch (Exception e)
                 {
                     fail("Reading a chest", e);
-                    continue;
                 }
-                if (matches.Count == 0) continue;
+            }
+
+            foreach (var pile in piles.OrderBy(p => p.Value.Sum(i => i.m_stack)).ThenBy(p => p.Key.Distance))
+            {
+                CollectSource source = pile.Key;
+                List<ItemDrop.ItemData> matches = pile.Value;
 
                 if (source.Busy)
                 {
                     result.BusySkipped++;
+                    continue;
+                }
+
+                if (skipBiggerPiles && CountOf(source.Inventory, result.ItemName) > CountOf(target, result.ItemName))
+                {
+                    result.BiggerSkipped++;
                     continue;
                 }
 
@@ -107,6 +125,15 @@ namespace CollectAll
                 if (tookAny) result.ChestsTakenFrom++;
             }
             return result;
+        }
+
+        /// <summary>How many of this item (any quality) an inventory holds.</summary>
+        internal static int CountOf(Inventory inv, string itemName)
+        {
+            int n = 0;
+            foreach (ItemDrop.ItemData item in inv.GetAllItems())
+                if (item.m_shared.m_name == itemName) n += item.m_stack;
+            return n;
         }
     }
 }

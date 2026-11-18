@@ -580,6 +580,53 @@ namespace SignSorterTests
                 Eq(30, Count(target, "Fine wood") + CountInv(a.Inventory, "Fine wood"), "no duplication or loss");
                 True(r.Errors > 0, "error reported");
             });
+            T("bigger pile: a chest with more of the item is left alone", () =>
+            {
+                var target = Chest(null, ("Bone fragments", 30));
+                var stash = Src(Chest(null, items: new[] { ("Bone fragments", 50), ("Bone fragments", 50) }), 2f);
+                var r = CollectWith(true, target, "Bone fragments", stash);
+                Eq(0, r.Moved);
+                Eq(1, r.BiggerSkipped);
+                Eq(100, CountInv(stash.Inventory, "Bone fragments"));
+            });
+            T("bigger pile: smaller piles are pulled, and the chest grows as it goes", () =>
+            {
+                // Target 20. Piles: 15 (far), 10 (near), 40. Takes 10 -> 30, 15 -> 45, then 40 < 45 -> takes it too.
+                var target = Chest(null, ("Bone fragments", 20));
+                var near = Src(Chest(null, ("Bone fragments", 10)), 1f);
+                var far = Src(Chest(null, ("Bone fragments", 15)), 20f);
+                var big = Src(Chest(null, ("Bone fragments", 40)), 5f);
+                var r = CollectWith(true, target, "Bone fragments", near, far, big);
+                Eq(85, Count(target, "Bone fragments"));
+                Eq(3, r.ChestsTakenFrom);
+                Eq(0, r.BiggerSkipped);
+            });
+            T("bigger pile: collecting in two chests in turn never shuffles items", () =>
+            {
+                var a = Chest(null, items: new[] { ("Bone fragments", 50), ("Bone fragments", 50), ("Bone fragments", 50) });
+                var b = Chest(null, ("Bone fragments", 20), ("Resin", 5));
+                for (int i = 0; i < 4; i++)
+                {
+                    CollectWith(true, b, "Bone fragments", Src(a, 1f));
+                    CollectWith(true, a, "Bone fragments", Src(b, 1f));
+                }
+                Eq(170, Count(a, "Bone fragments"));
+                Eq(0, Count(b, "Bone fragments"));
+                Eq(5, Count(b, "Resin"));
+            });
+            T("bigger pile: two equal piles can still be combined, once", () =>
+            {
+                var a = Chest(null, ("Bone fragments", 20));
+                var b = Chest(null, ("Bone fragments", 20));
+                Eq(20, CollectWith(true, b, "Bone fragments", Src(a, 1f)).Moved);
+                Eq(0, CollectWith(true, a, "Bone fragments", Src(b, 1f)).Moved);
+            });
+            T("bigger pile: off pulls from every chest", () =>
+            {
+                var target = Chest(null, ("Bone fragments", 30));
+                var stash = Src(Chest(null, ("Bone fragments", 50)), 2f);
+                Eq(50, CollectWith(false, target, "Bone fragments", stash).Moved);
+            });
             T("fuzz: 3000 random collects conserve items and take everything that fits", () => FuzzCollect(3000));
 
             // --- randomized: thousands of messy bases, nothing may ever be lost or duplicated.
@@ -747,7 +794,11 @@ namespace SignSorterTests
         private static CollectAll.CollectSource Src(SortChest chest, float distance) =>
             new CollectAll.CollectSource { Inventory = chest.Inventory, Distance = distance };
 
-        private static CollectAll.CollectResult Collect(SortChest target, string itemName, params CollectAll.CollectSource[] sources)
+        // Most collect tests check the moving itself, so they run with "bigger pile wins" off.
+        private static CollectAll.CollectResult Collect(SortChest target, string itemName, params CollectAll.CollectSource[] sources) =>
+            CollectWith(false, target, itemName, sources);
+
+        private static CollectAll.CollectResult CollectWith(bool skipBiggerPiles, SortChest target, string itemName, params CollectAll.CollectSource[] sources)
         {
             var example = target.Inventory.GetAllItems().FirstOrDefault(i => i.m_shared.m_name == itemName)
                 ?? sources.SelectMany(s => s.Inventory.GetAllItems()).FirstOrDefault(i => i.m_shared.m_name == itemName)
@@ -755,7 +806,7 @@ namespace SignSorterTests
             var all = new List<Inventory> { target.Inventory };
             all.AddRange(sources.Select(s => s.Inventory).Where(i => !ReferenceEquals(i, target.Inventory)));
             var before = Describe(TotalsOf(all));
-            var r = CollectAll.Collector.Collect(target.Inventory, example, sources, (w, e) => { });
+            var r = CollectAll.Collector.Collect(target.Inventory, example, sources, (w, e) => { }, skipBiggerPiles);
             Eq(before, Describe(TotalsOf(all)), "items conserved");
             foreach (var inv in all) CheckGrid(inv, "after collect");
             return r;
@@ -781,14 +832,35 @@ namespace SignSorterTests
                     sources.Add(src);
                 }
                 string name = FuzzItems[rng.Next(FuzzItems.Length)];
-                var r = Collect(target, name, sources.ToArray());
+                bool bigger = rng.Next(2) == 0;
+                var r = CollectWith(bigger, target, name, sources.ToArray());
                 string where = $"round {round}";
                 Eq(0, r.Errors, where + " errors");
 
-                // Whatever's left in a reachable chest must be something the target has no room for.
+                // Whatever's left in a reachable chest must be something the target has no room for
+                // (or, with "bigger pile wins", sit in a chest that still has more than the target).
+                int targetHas = CollectAll.Collector.CountOf(target.Inventory, name);
                 foreach (var src in sources.Where(s => !s.Busy))
+                {
+                    if (bigger && CollectAll.Collector.CountOf(src.Inventory, name) > targetHas) continue;
                     foreach (var left in src.Inventory.GetAllItems().Where(i => i.m_shared.m_name == name))
                         Eq(0, ChestShared.InventoryOps.FreeSpaceFor(target.Inventory, left), $"{where}: {name} left behind although it fits");
+                }
+
+                // And with "bigger pile wins", collecting back into a source only moves items toward an
+                // equal or bigger pile, and after that collecting into the target again moves nothing.
+                if (bigger)
+                {
+                    foreach (var src in sources.Where(s => !s.Busy))
+                    {
+                        int srcHad = CollectAll.Collector.CountOf(src.Inventory, name);
+                        int targetHad = CollectAll.Collector.CountOf(target.Inventory, name);
+                        var back = CollectWith(true, new SortChest { Inventory = src.Inventory }, name, Src(target, 1f));
+                        if (back.Moved > 0) True(targetHad <= srcHad, $"{where}: items flowed out of a bigger pile ({targetHad} > {srcHad})");
+                        var again = CollectWith(true, target, name, Src(new SortChest { Inventory = src.Inventory }, 1f));
+                        if (back.Moved > 0) Eq(0, again.Moved, $"{where}: items shuffled back and forth");
+                    }
+                }
             }
         }
 

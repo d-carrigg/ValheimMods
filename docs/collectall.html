@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CollectAll Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #15110d; --panel: #201a14; --panel-2: #2a221a; --line: #3b3025; --text: #ece3d4; --muted: #b3a48d;
+    --gold: #e0b45a; --ok: #8fc27a; --slot: #1a1510;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 Inter, system-ui, sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1, h2, h3 { font-family: Cinzel, Georgia, serif; letter-spacing: .02em; margin: 0; color: var(--gold); }
+  h1 { font-size: 36px; }
+  h3 { font-size: 17px; margin-bottom: 10px; }
+  .lede { color: var(--muted); font-size: 16px; margin: 6px 0 4px; max-width: 760px; }
+  .mock { display: inline-block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #a08f76; border: 1px solid var(--line); border-radius: 99px; padding: 2px 10px; margin-top: 6px; }
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
+  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; position: relative; }
+  .num { font-family: Cinzel, serif; color: var(--gold); font-size: 22px; margin-right: 6px; }
+  .win { background: #241c14; border: 1px solid #4a3b2a; border-radius: 8px; padding: 10px; position: relative; }
+  .win .title { font-family: Cinzel, serif; font-size: 13px; color: #e8d6b6; margin-bottom: 8px; }
+  .slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .s { aspect-ratio: 1; background: var(--slot); border: 1px solid #2f261c; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; line-height: 1.1; text-align: center; overflow: hidden; overflow-wrap: anywhere; padding: 2px; position: relative; }
+  .s b { font-size: 11px; font-weight: 600; }
+  .fw { color: #e8c08a; } .cw { color: #c9a27a; } .rs { color: #e3cf7d; }
+  .s.hl { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(224,180,90,.45) inset; }
+  .s.new { border-color: #3f6b33; background: #16220f; }
+  .buttons { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; }
+  .btn { background: linear-gradient(#6d5235, #4d3922); border: 1px solid #8a6a43; color: #f1e3c8; border-radius: 4px; padding: 5px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .btn.ours { box-shadow: 0 0 0 2px var(--gold); }
+  .btn.pick { color: #ffd15a; }
+  .cursor { position: absolute; width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-bottom: 16px solid #fff; transform: rotate(-35deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
+  .msg { background: rgba(0,0,0,.6); border-top: 2px solid var(--gold); text-align: center; padding: 7px 10px; border-radius: 4px; font-size: 13px; margin-top: 10px; }
+  .caption { color: var(--muted); font-size: 13.5px; margin-top: 10px; }
+  .others { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-top: 16px; }
+  .chests { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .chest { display: grid; grid-template-columns: 130px 1fr; align-items: center; } .chest h4 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 500; }
+  .row2 { display: grid; grid-template-columns: minmax(0, 340px) 30px minmax(0, 340px); gap: 8px; align-items: center; }
+  .arrow { color: var(--gold); text-align: center; }
+  .s.gone { border-style: dashed; border-color: #6b4a2a; color: #7d6c55; }
+  .notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+  .note { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; font-size: 14px; color: #dccdb4; }
+  .note b { color: var(--text); }
+  kbd { display: inline-block; background: #e9dfcf; color: #1b140d; border-radius: 5px; padding: 1px 7px; font: 600 12px Inter, sans-serif; box-shadow: 0 2px 0 #8f8577; }
+  @media (max-width: 800px) { .steps, .chests, .notes { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>CollectAll</h1>
+  <p class="lede">Open a chest, click <b>Collect</b>, click an item. Every other stack of that item in chests nearby moves into this one.</p>
+  <span class="mock">Mock-up of the chest window, not an in-game screenshot · item counts are real output of the mod's code</span>
+
+  <div class="steps">
+    <div class="step">
+      <h3><span class="num">1</span>Click Collect</h3>
+      <div class="win">
+        <div class="title">Reinforced chest</div>
+        <div class="slots">
+          <div class="s"><b class="fw">Fine wood</b>12</div><div class="s"><b class="cw">Core wood</b>30</div><div class="s"><b class="rs">Resin</b>18</div><div class="s"></div><div class="s"></div>
+          <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+        </div>
+        <div class="buttons"><span class="btn">Take all</span><span class="btn">Place stacks</span><span class="btn ours">Collect</span></div>
+        <span class="cursor" style="right:24px; bottom:-6px"></span>
+      </div>
+      <p class="caption">A new button sits next to the game's own chest buttons.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span>Click the item</h3>
+      <div class="win">
+        <div class="title">Reinforced chest</div>
+        <div class="slots">
+          <div class="s hl"><b class="fw">Fine wood</b>12</div><div class="s"><b class="cw">Core wood</b>30</div><div class="s"><b class="rs">Resin</b>18</div><div class="s"></div><div class="s"></div>
+          <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+        </div>
+        <div class="buttons"><span class="btn">Take all</span><span class="btn">Place stacks</span><span class="btn ours pick">Pick item…</span></div>
+        <span class="cursor" style="left:44px; top:62px"></span>
+      </div>
+      <div class="msg">Click an item to collect all of it into this chest</div>
+      <p class="caption">Right-click or Esc cancels. Shortcut: <kbd>Alt</kbd> + click the item skips step 1.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span>Done</h3>
+      <div class="win">
+        <div class="title">Reinforced chest</div>
+        <div class="slots">
+          <div class="s new"><b class="fw">Fine wood</b>50</div><div class="s"><b class="cw">Core wood</b>30</div><div class="s"><b class="rs">Resin</b>18</div><div class="s"></div><div class="s"></div>
+          <div class="s new"><b class="fw">Fine wood</b>50</div><div class="s new"><b class="fw">Fine wood</b>32</div><div class="s"></div><div class="s"></div><div class="s"></div>
+        </div>
+        <div class="buttons"><span class="btn">Take all</span><span class="btn">Place stacks</span><span class="btn">Collect</span></div>
+      </div>
+      <div class="msg">Collected 120 Fine wood from 3 chests</div>
+      <p class="caption">Tops up the existing stack first, then fills free slots. Everything else stays where it was.</p>
+    </div>
+  </div>
+
+  <div class="others">
+    <h3>Meanwhile, in the other chests nearby</h3>
+    <div class="chests">
+      <div class="chest"><h4>Chest 3 m away</h4>
+        <div class="row2">
+          <div class="slots"><div class="s"><b>Wood</b>50</div><div class="s"><b class="fw">Fine wood</b>40</div><div class="s"><b>Stone</b>50</div><div class="s"><b class="fw">Fine wood</b>7</div><div class="s"></div></div>
+          <div class="arrow">→</div>
+          <div class="slots"><div class="s"><b>Wood</b>50</div><div class="s gone">taken</div><div class="s"><b>Stone</b>50</div><div class="s gone">taken</div><div class="s"></div></div>
+        </div>
+      </div>
+      <div class="chest"><h4>Chest 6 m away</h4>
+        <div class="row2">
+          <div class="slots"><div class="s"><b class="fw">Fine wood</b>50</div><div class="s"><b>Flint</b>20</div><div class="s"></div><div class="s"></div><div class="s"></div></div>
+          <div class="arrow">→</div>
+          <div class="slots"><div class="s gone">taken</div><div class="s"><b>Flint</b>20</div><div class="s"></div><div class="s"></div><div class="s"></div></div>
+        </div>
+      </div>
+      <div class="chest"><h4>Chest 11 m away</h4>
+        <div class="row2">
+          <div class="slots"><div class="s"><b>Feathers</b>9</div><div class="s"><b class="fw">Fine wood</b>23</div><div class="s"></div><div class="s"></div><div class="s"></div></div>
+          <div class="arrow">→</div>
+          <div class="slots"><div class="s"><b>Feathers</b>9</div><div class="s gone">taken</div><div class="s"></div><div class="s"></div><div class="s"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><b>Range:</b> chests within 30&nbsp;m of the open one (configurable). Nearest chests are emptied first.</div>
+    <div class="note"><b>Chest fills up?</b> It stops and tells you: "Chest is full - 45 more still elsewhere". Nothing is left half-moved.</div>
+    <div class="note"><b>Safe:</b> chests someone else has open are skipped, and so are the Obliterator, carts and ships. Every move is re-counted, so nothing is duplicated or lost.</div>
+  </div>
+</div>
+</body>
+</html>

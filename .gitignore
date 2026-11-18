@@ -1,0 +1,11 @@
+# Build output
+bin/
+obj/
+*.user
+.vs/
+.idea/
+
+# Packaged mods (rebuild from package/ + the built DLL)
+*.zip
+package/**/*.dll
+package/**/README.md

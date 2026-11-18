@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SignSorter Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #15110d; --panel: #201a14; --panel-2: #2a221a; --line: #3b3025;
+    --text: #ece3d4; --muted: #b3a48d; --gold: #e0b45a; --plank: #b98a52; --plank-dark: #8a6236;
+    --chest: #6b4423; --chest-band: #3c2a1a; --ok: #8fc27a; --warn: #e6a35a; --slot: #1a1510;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 Inter, system-ui, sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1, h2 { font-family: Cinzel, Georgia, serif; letter-spacing: .02em; margin: 0; }
+  h1 { font-size: 40px; color: var(--gold); }
+  h2 { font-size: 24px; color: var(--gold); margin-bottom: 4px; }
+  .lede { color: var(--muted); font-size: 17px; margin: 8px 0 0; max-width: 680px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-top: 24px; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  .scene {
+    background: linear-gradient(#2d241b, #241d16); border: 1px solid var(--line); border-radius: 10px;
+    padding: 30px 18px 34px; position: relative;
+    display: flex; gap: 16px; justify-content: center; align-items: flex-end; flex-wrap: wrap;
+  }
+  .wall-label { position: absolute; top: 8px; left: 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: #7d6c55; }
+  .col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .sign {
+    background: linear-gradient(var(--plank), var(--plank-dark)); color: #2a1a0b; border-radius: 4px; padding: 7px 12px;
+    font-weight: 600; font-family: Cinzel, Georgia, serif; box-shadow: 0 2px 0 #5d3f20, inset 0 1px 0 rgba(255,255,255,.25);
+    white-space: nowrap; font-size: 15px;
+  }
+  .chest {
+    width: 118px; height: 78px; border-radius: 6px 6px 4px 4px; position: relative;
+    background: linear-gradient(#7a4f2a, var(--chest)); box-shadow: inset 0 0 0 3px var(--chest-band), 0 4px 0 #2a1c10;
+  }
+  .chest::before { content: ""; position: absolute; left: 0; right: 0; top: 26px; height: 6px; background: var(--chest-band); }
+  .chest::after { content: ""; position: absolute; left: 51px; top: 22px; width: 16px; height: 16px; background: #c9a24c; border-radius: 3px; }
+  .chest .tag { position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; color: var(--ok); font-weight: 600; }
+  .chest.dim { opacity: .6; }
+  .chest.dim .tag { color: var(--muted); }
+  .chest.lock .tag { color: #d9a6e8; }
+  .spacer { height: 36px; }
+  .arrowline { color: var(--gold); font-size: 13px; font-weight: 600; }
+  .row { display: flex; gap: 18px; align-items: flex-end; }
+  .note { color: var(--muted); font-size: 13px; margin: 14px 0 0; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+  .p4 { background: #2f4a2a; color: #b9e3a8; } .p3 { background: #3c4a26; color: #d8e3a3; }
+  .p2 { background: #4a4126; color: #ecd9a0; } .p1 { background: #4a3426; color: #ecc0a0; } .p0 { background: #3a3030; color: #d9c0c0; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 13px; }
+  code, pre { font-family: "JetBrains Mono", Consolas, monospace; font-variant-ligatures: none; }
+  code { background: var(--panel-2); padding: 1px 6px; border-radius: 4px; color: var(--gold); }
+  pre { background: #120e0a; border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.6; margin: 0; }
+  .c { color: #7d6c55; } .k { color: var(--gold); } .v { color: #cfe3b8; }
+  .pairs { display: grid; grid-template-columns: 170px minmax(0, 340px) 28px minmax(0, 340px); justify-content: center; gap: 10px 12px; align-items: center; }
+  .pairs .hdr { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
+  .pairs .to { color: var(--gold); font-size: 20px; text-align: center; }
+  .pairs .sign { justify-self: start; font-size: 13px; }
+  .slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+  .s {
+    aspect-ratio: 1; background: var(--slot); border-radius: 4px; font-size: 10px; line-height: 1.1; border: 1px solid #2c241b;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1px;
+    overflow: hidden; overflow-wrap: anywhere;
+  }
+  .s b { font-size: 11px; font-weight: 600; }
+  .s.wrong { border-color: #8a3b2b; background: #2a1712; }
+  .s.right { border-color: #3f6b33; background: #16220f; }
+  .wood { color: #e1b583; } .stone { color: #c2c2c2; } .ore { color: #e09a6a; } .food { color: #f0d27a; } .junk { color: #b9a4d6; }
+  .steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .step { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 14px; }
+  .step .n { font-family: Cinzel, serif; color: var(--gold); font-size: 20px; }
+  .msg { background: rgba(0,0,0,.55); border-left: 3px solid var(--gold); padding: 8px 12px; border-radius: 4px; font-size: 14px; margin-top: 8px; max-width: 720px; white-space: pre-line; }
+  .msg.warn { border-color: var(--warn); }
+  .msg.center { text-align: center; margin: 0 auto 18px; border-left: none; border-top: 3px solid var(--gold); }
+  .keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .key { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 16px; font-size: 14px; }
+  kbd { display: inline-block; background: #e9dfcf; color: #1b140d; border-radius: 6px; padding: 3px 9px; font: 600 14px Inter, sans-serif; box-shadow: 0 3px 0 #8f8577; margin-right: 4px; }
+  @media (max-width: 760px) {
+    .steps, .keys { grid-template-columns: 1fr; }
+    .pairs { grid-template-columns: 1fr; }
+    .pairs .to { transform: rotate(90deg); }
+    h1 { font-size: 30px; }
+  }
+  body.only section { display: none; }
+  body.only section.show { display: block; margin-top: 0; }
+  body.only header { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>SignSorter</h1>
+    <p class="lede">Put a sign next to a chest and write what goes in it. Nearby items walk themselves into the right chest.</p>
+  </header>
+
+  <section id="plain">
+    <h2>1 · Plain signs</h2>
+    <p class="sub">A sign labels the one chest closest to it (within 2.5&nbsp;m). Separate several things with commas.</p>
+    <div class="scene">
+      <span class="wall-label">Your storage wall</span>
+      <div class="col"><div class="sign">Wood, Fine wood</div><div class="chest"><span class="tag">Wood + Fine wood</span></div></div>
+      <div class="col"><div class="sign">Stone &amp; Flint</div><div class="chest"><span class="tag">Stone + Flint</span></div></div>
+      <div class="col"><div class="sign">Food</div><div class="chest"><span class="tag">anything you eat</span></div></div>
+      <div class="col"><div class="sign">*</div><div class="chest"><span class="tag">overflow / leftovers</span></div></div>
+      <div class="col"><div class="spacer"></div><div class="chest dim"><span class="tag">no sign: inbox</span></div></div>
+      <div class="col"><div class="sign">Bob's stuff</div><div class="chest lock"><span class="tag">left alone</span></div></div>
+    </div>
+    <p class="note"><b>No sign</b> = inbox: items another sign <i>names</i> (Wood, *wood…) get taken out. It never feeds <code>*</code> or category chests, and personal chests without a sign are never touched.
+      <b>A sign that names no item</b> ("Bob's stuff", "Don't touch") leaves its chest alone.</p>
+  </section>
+
+  <section id="arrows">
+    <h2>2 · Arrows for tight rows</h2>
+    <p class="sub">When chests are packed together, point at the one you mean. Left and right are as you see them while reading the sign.</p>
+    <div class="scene">
+      <span class="wall-label">Chests side by side, signs between them</span>
+      <div class="row">
+        <div class="col"><div class="spacer"></div><div class="chest"><span class="tag">Copper ore</span></div></div>
+        <div class="col"><div class="sign">&lt; Copper ore</div><div class="arrowline">◀ labels the chest on its left</div></div>
+        <div class="col"><div class="spacer"></div><div class="chest dim"><span class="tag">(its own sign)</span></div></div>
+        <div class="col"><div class="sign">Tin ore &gt;</div><div class="arrowline">labels the chest on its right ▶</div></div>
+        <div class="col"><div class="spacer"></div><div class="chest"><span class="tag">Tin ore</span></div></div>
+      </div>
+    </div>
+    <div class="scene" style="margin-top:14px">
+      <span class="wall-label">Stacked chests</span>
+      <div class="col">
+        <div class="chest"><span class="tag" style="bottom:auto;top:-22px">Meads</span></div>
+        <div class="sign" style="margin-top:6px">^ Meads</div>
+        <div class="sign">v Food</div>
+        <div class="chest" style="margin-top:6px"><span class="tag">Food</span></div>
+      </div>
+      <div style="max-width:400px; color: var(--muted); align-self:center; font-size:14px">
+        <p style="margin:0 0 8px">Arrows: <code>&lt;</code> <code>&lt;-</code> <code>&gt;</code> <code>-&gt;</code> <code>^</code> <code>v</code>, at the start or end of the sign.</p>
+        <p style="margin:0 0 8px">An arrow sign reaches up to 4&nbsp;m and labels only the chest it points at. <code>^</code>/<code>v</code> skip the chest the sign is mounted on.</p>
+        <p style="margin:0">If left and right come out swapped in your game, turn on <code>FlipLeftRight</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="writing">
+    <h2>3 · What you can write</h2>
+    <p class="sub">Capitals and spaces don't matter. When two chests both want an item, the more specific sign wins.</p>
+    <table>
+      <tr><th style="width:24%">Sign says</th><th>Takes</th><th style="width:13%">Priority</th></tr>
+      <tr><td><code>Fine wood</code></td><td>Exactly that item. Plurals are fine: <code>Stones</code>, <code>Raspberry</code>.</td><td><span class="pill p4">highest</span></td></tr>
+      <tr><td><code>Fine wod</code></td><td>A misspelling matches the <i>one</i> item it's closest to. Never when you wrote a different real item: "Boar meat" won't grab Bear meat.</td><td><span class="pill p3">high</span></td></tr>
+      <tr><td><code>*wood</code></td><td>Wildcard: Wood, Fine wood, Core wood, Yggdrasil wood…</td><td><span class="pill p2">medium</span></td></tr>
+      <tr><td><code>Food</code> <code>Meads</code> <code>Arrows</code></td><td>Categories: Food, Meads, Weapons, Armor, Shields, Ammo, Arrows, Bolts, Tools, Trophies, Fish, Materials, Ores, Trinkets, Misc, Unteleportable</td><td><span class="pill p1">low</span></td></tr>
+      <tr><td><code>*</code></td><td>Leftovers from other labeled chests. Your overflow chest.</td><td><span class="pill p0">lowest</span></td></tr>
+      <tr><td><code>Wood &amp; Stone</code> <code>Wood/Stone</code></td><td>Same as <code>Wood, Stone</code>.</td><td></td></tr>
+      <tr><td><code>Metal</code></td><td>Your own words, from the alias file (next section).</td><td>as defined</td></tr>
+      <tr><td><code>nosort</code></td><td>Never touch this chest.</td><td></td></tr>
+    </table>
+    <div class="msg warn" style="margin-top:16px">No item called: Wodd, Coper bars (add it to SignSorter.aliases.txt?)</div>
+    <p class="note">Press <kbd>F8</kbd> and the mod tells you about any sign entry it couldn't match to a real item.</p>
+  </section>
+
+  <section id="aliases">
+    <h2>4 · Your own names: the alias file</h2>
+    <p class="sub"><code>BepInEx/config/SignSorter.aliases.txt</code> is created the first time you launch. Edit it any time; it reloads within a couple of seconds, so you don't need to restart.</p>
+    <pre><span class="c"># name you write on a sign = what it means</span>
+<span class="k">Metal, Metals, Bars, Ingots</span> = <span class="v">Copper, Tin, Bronze, Iron, Silver, Black metal, Flametal</span>
+<span class="k">Meat, Meats</span> = <span class="v">Raw meat, Boar meat, Deer meat, Wolf meat, Lox meat, Serpent meat, Neck tail, …</span>
+<span class="k">Hides, Pelts, Leather</span> = <span class="v">*hide, *pelt, Leather scraps</span>
+<span class="k">Seeds</span> = <span class="v">*seeds, Acorn, Fir cone, Pine cone</span>
+<span class="k">Gems</span> = <span class="v">Ruby, Amber, Amber pearl</span>
+
+<span class="c"># Aliases can use other aliases, wildcards and categories:</span>
+<span class="k">Smithing</span> = <span class="v">Metal, Ores, Coal</span></pre>
+    <div class="scene" style="margin-top:14px">
+      <span class="wall-label">Then on the wall</span>
+      <div class="col"><div class="sign">Metal</div><div class="chest"><span class="tag">all 7 metal bars</span></div></div>
+      <div class="col"><div class="sign">Hides</div><div class="chest"><span class="tag">hides, pelts, scraps</span></div></div>
+      <div class="col"><div class="sign">Smithing</div><div class="chest"><span class="tag">bars + ores + coal</span></div></div>
+    </div>
+  </section>
+
+  <section id="messy">
+    <h2>5 · Installing on a world that's already a mess</h2>
+    <p class="sub">Nothing moves when you load in, even if your chests already have signs. The mod waits until you sort by hand once in that world.</p>
+    <div class="msg center">SignSorter: 891 items here can be sorted.
+Press Shift+F8 to sort (Ctrl+F8 undoes). Auto-sort starts after that.</div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div>Put a sign by each chest saying what it <i>should</i> hold. Ignore what's in it now.</div>
+      <div class="step"><div class="n">2</div>Add one <code>*</code> chest for odds and ends. Put <code>nosort</code> on chests to leave alone.</div>
+      <div class="step"><div class="n">3</div>Stand in the middle of your base, press <kbd>Shift</kbd><kbd>F8</kbd>. Repeats until settled, 60&nbsp;m around you.</div>
+      <div class="step"><div class="n">4</div>Don't like it? <kbd>Ctrl</kbd><kbd>F8</kbd> puts every chest back exactly as it was.</div>
+    </div>
+
+    <div class="pairs">
+      <div></div><div class="hdr">Before</div><div></div><div class="hdr">After Shift+F8</div>
+
+      <div class="sign">Wood</div>
+      <div class="slots">
+        <div class="s wrong stone"><b>Stone</b>50</div><div class="s wrong stone"><b>Stone</b>50</div><div class="s wrong ore"><b>Copper ore</b>30</div><div class="s right wood"><b>Wood</b>12</div><div class="s wrong junk"><b>Feathers</b>9</div>
+        <div class="s right wood"><b>Wood</b>7</div><div class="s wrong food"><b>Cooked meat</b>4</div><div class="s wrong stone"><b>Flint</b>16</div><div class="s right wood"><b>Wood</b>31</div><div class="s wrong ore"><b>Tin ore</b>22</div>
+      </div>
+      <div class="to">→</div>
+      <div class="slots">
+        <div class="s right wood"><b>Wood</b>50</div><div class="s right wood"><b>Wood</b>50</div><div class="s"></div><div class="s right wood"><b>Wood</b>50</div><div class="s"></div>
+        <div class="s right wood"><b>Wood</b>50</div><div class="s right wood"><b>Wood</b>50</div><div class="s right wood"><b>Wood</b>50</div><div class="s right wood"><b>Wood</b>50</div><div class="s right wood"><b>Wood</b>10</div>
+      </div>
+
+      <div class="sign">Stone, Flint</div>
+      <div class="slots">
+        <div class="s wrong wood"><b>Wood</b>50</div><div class="s wrong wood"><b>Wood</b>50</div><div class="s wrong wood"><b>Fine wood</b>20</div><div class="s right stone"><b>Stone</b>5</div><div class="s wrong food"><b>Raspberries</b>13</div>
+        <div class="s wrong ore"><b>Copper ore</b>11</div><div class="s wrong wood"><b>Wood</b>40</div><div class="s wrong junk"><b>Troll hide</b>3</div><div class="s wrong wood"><b>Wood</b>50</div><div class="s wrong wood"><b>Wood</b>50</div>
+      </div>
+      <div class="to">→</div>
+      <div class="slots">
+        <div class="s right stone"><b>Stone</b>50</div><div class="s right stone"><b>Stone</b>50</div><div class="s right stone"><b>Stone</b>50</div><div class="s right stone"><b>Stone</b>50</div><div class="s right stone"><b>Stone</b>50</div>
+        <div class="s right stone"><b>Stone</b>50</div><div class="s right stone"><b>Stone</b>50</div><div class="s right stone"><b>Stone</b>50</div><div class="s right stone"><b>Stone</b>50</div><div class="s right stone"><b>Flint</b>24</div>
+      </div>
+
+      <div class="sign">Copper ore, Tin ore</div>
+      <div class="slots">
+        <div class="s wrong stone"><b>Stone</b>50</div><div class="s wrong stone"><b>Stone</b>50</div><div class="s wrong stone"><b>Stone</b>50</div><div class="s wrong wood"><b>Wood</b>50</div><div class="s wrong stone"><b>Stone</b>45</div>
+        <div class="s wrong wood"><b>Wood</b>20</div><div class="s wrong stone"><b>Flint</b>8</div><div class="s wrong stone"><b>Stone</b>50</div><div class="s wrong stone"><b>Stone</b>50</div><div class="s wrong stone"><b>Stone</b>50</div>
+      </div>
+      <div class="to">→</div>
+      <div class="slots">
+        <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+        <div class="s right ore"><b>Copper ore</b>41</div><div class="s right ore"><b>Tin ore</b>22</div><div class="s"></div><div class="s"></div><div class="s"></div>
+      </div>
+
+      <div class="sign">*</div>
+      <div class="slots">
+        <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+        <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+      </div>
+      <div class="to">→</div>
+      <div class="slots">
+        <div class="s"></div><div class="s"></div><div class="s right wood"><b>Fine wood</b>20</div><div class="s right food"><b>Raspberries</b>13</div><div class="s right junk"><b>Troll hide</b>3</div>
+        <div class="s"></div><div class="s"></div><div class="s"></div><div class="s right junk"><b>Feathers</b>9</div><div class="s right food"><b>Cooked meat</b>4</div>
+      </div>
+    </div>
+
+    <div class="msg">Sorted 1025 items into 4 chests, merged 6 stacks (Ctrl+F8 to undo)</div>
+    <p class="note">This is the real output of these four chests run through the mod (3 passes, every item accounted for). The count is moves, so an item that hops twice counts twice. Without the <code>*</code> chest, the leftovers stay put and F8 lists them: "No sign wants: Feathers, Cooked meat…".</p>
+  </section>
+
+  <section id="keys">
+    <h2>6 · Keys</h2>
+    <p class="sub">Change any of these in r2modman → Config editor → <code>local.signsorter</code>.</p>
+    <div class="keys">
+      <div class="key"><kbd>F8</kbd><p>Sort chests within 20&nbsp;m now. Reports sign entries it couldn't understand and items no sign wants.</p></div>
+      <div class="key"><kbd>Shift</kbd><kbd>F8</kbd><p>Deep sort: 60&nbsp;m, repeats until settled. Also switches on auto-sort for this world.</p></div>
+      <div class="key"><kbd>Ctrl</kbd><kbd>F8</kbd><p>Undo the last F8 / Shift+F8, if those chests haven't changed since. Pauses auto-sort until you sort again.</p></div>
+      <div class="key"><kbd>F9</kbd><p>Empty your bag into chests whose sign <i>names</i> the item. Keeps equipped gear, the hotbar, and anything only a category or <code>*</code> would take.</p></div>
+    </div>
+    <p class="note">Auto-sort runs every 5 seconds within 20&nbsp;m once a world is switched on, and skips the work when nothing has changed. Chests anyone has open are never touched. In multiplayer, the mod only sorts chests your game controls (always true in single player, and usually true when you're the only one around).</p>
+  </section>
+</div>
+<script>
+  // ?only=messy renders just one section (used to make screenshots).
+  try {
+    const only = new URLSearchParams(location.search).get("only");
+    if (only) {
+      document.body.classList.add("only");
+      const s = document.getElementById(only);
+      if (s) s.classList.add("show");
+    }
+  } catch (e) {}
+</script>
+</body>
+</html>

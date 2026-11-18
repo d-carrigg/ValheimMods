@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Runs on .NET 8 because the game's DLLs target .NET Standard 2.1, which .NET Framework can't load.
+       The mod's source files are compiled in directly so the exact same code is tested. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AssemblyName>SignSorter.Tests</AssemblyName>
+    <NoWarn>$(NoWarn);CS0436;MSB3277</NoWarn>
+    <ValheimDir Condition="'$(ValheimDir)' == ''">E:\SteamLibrary\steamapps\common\Valheim</ValheimDir>
+    <BepInExDir Condition="'$(BepInExDir)' == ''">$(APPDATA)\r2modmanPlus-local\Valheim\profiles\first - Copy\BepInEx</BepInExDir>
+    <ManagedDir>$(ValheimDir)\valheim_Data\Managed</ManagedDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="TestData\**" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="..\Shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
+    <Compile Include="..\CollectAll\Collector.cs" Link="CollectAll\Collector.cs" />
+    <Compile Include="..\SignSorter\*.cs" Exclude="..\SignSorter\AssemblyInfo.cs" Link="Mod\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Copied next to the test exe so the game's real Inventory code runs in the tests. -->
+  <ItemGroup>
+    <Reference Include="BepInEx"><HintPath>$(BepInExDir)\core\BepInEx.dll</HintPath></Reference>
+    <Reference Include="assembly_valheim"><HintPath>$(ManagedDir)\assembly_valheim.dll</HintPath></Reference>
+    <Reference Include="assembly_utils"><HintPath>$(ManagedDir)\assembly_utils.dll</HintPath></Reference>
+    <Reference Include="assembly_guiutils"><HintPath>$(ManagedDir)\assembly_guiutils.dll</HintPath></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(ManagedDir)\UnityEngine.dll</HintPath></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath></Reference>
+    <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(ManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath></Reference>
+  </ItemGroup>
+
+</Project>

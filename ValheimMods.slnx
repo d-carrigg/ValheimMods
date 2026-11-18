@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="CollectAll/CollectAll.csproj" />
+  <Project Path="SignSorter.Tests/SignSorter.Tests.csproj" />
+  <Project Path="SignSorter/SignSorter.csproj" />
+</Solution>

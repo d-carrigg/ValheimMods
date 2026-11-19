@@ -3,7 +3,7 @@
 #   pwsh package/build-collectall.ps1                       # uses the paths in CollectAll.csproj
 #   pwsh package/build-collectall.ps1 -ManagedDir ... -BepInExDir ...
 #
-# Output: dist/CollectAll-<version>.zip with manifest.json, icon.png, README.md
+# Output: dist/dcarrigg-CollectAll-<version>.zip with manifest.json, icon.png, README.md
 # and CollectAll.dll at the top level, ready to upload to thunderstore.io.
 param(
     [string]$ManagedDir,
@@ -34,7 +34,7 @@ $dll = Join-Path $root 'CollectAll/bin/Release/CollectAll.dll'
 Copy-Item $dll $pkg -Force
 
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
-$zip = Join-Path $dist "CollectAll-$version.zip"
+$zip = Join-Path $dist "dcarrigg-CollectAll-$version.zip"
 Remove-Item $zip -ErrorAction SilentlyContinue
 $files = 'manifest.json', 'icon.png', 'README.md', 'CollectAll.dll' | ForEach-Object { Join-Path $pkg $_ }
 Compress-Archive -Path $files -DestinationPath $zip

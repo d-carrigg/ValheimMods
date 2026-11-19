@@ -1,6 +1,6 @@
 # Builds CollectAll and produces the Thunderstore upload zip.
 #
-# Every run: download the "CollectAll-<version>" artifact. It holds the zip
+# Every run: download the "dcarrigg-CollectAll-<version>" artifact. It holds the zip
 # to upload to thunderstore.io as-is.
 # Every push to main with a new manifest version_number publishes a GitHub
 # release "CollectAll <version>" (tag collectall-v<version>) with the zip.
@@ -62,7 +62,7 @@ jobs:
       - name: Check zip layout
         id: zip
         run: |
-          zip=$(ls dist/CollectAll-*.zip)
+          zip=$(ls dist/dcarrigg-CollectAll-*.zip)
           unzip -Z1 "$zip" | sort > contents.txt
           printf '%s\n' CollectAll.dll README.md icon.png manifest.json | diff - contents.txt
           echo "path=$zip" >> "$GITHUB_OUTPUT"

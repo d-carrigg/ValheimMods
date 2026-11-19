@@ -2,7 +2,7 @@
 
 Open a chest, click Collect, then click an item. Every stack of that item in the chests around you gets pulled into the one you have open.
 
-![Click Collect, pick Molten Core, and the stacks from nearby chests land in this one](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/collect-demo.gif)
+![Click Collect, pick Molten Core, and the stacks from nearby chests land in this one](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/collectall-demo.gif)
 
 ## How to use
 

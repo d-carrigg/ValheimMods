@@ -2,6 +2,8 @@
 
 Open a chest, click Collect, then click an item. Every stack of that item in the chests around you gets pulled into the one you have open.
 
+![Collecting Molten Core from 4 chests in one click](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/collect.gif)
+
 ![Chest open with the Collect button](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/1-before.jpg)
 
 ## How to use

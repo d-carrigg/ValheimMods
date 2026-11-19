@@ -27,6 +27,6 @@ dotnet SignSorter.Tests/bin/Release/SignSorter.Tests.dll
 ## Packaging CollectAll for r2modman / Thunderstore
 
 - GitHub Actions (`.github/workflows/collectall-package.yml`) builds CollectAll on every PR and push to `main` that touches it, with no game install needed. Download the `CollectAll-<version>` artifact from the run: that zip is the Thunderstore upload.
-- Pushing a tag like `collectall-v1.0.5` also attaches `CollectAll-1.0.5.zip` to a GitHub release.
+- Each push to `main` with a new `version_number` publishes a GitHub release (`collectall-v<version>`) with `CollectAll-<version>.zip` attached.
 - Locally: `pwsh package/build-collectall.ps1` builds and writes `dist/CollectAll-<version>.zip`.
 - For each release, bump `version_number` in `package/CollectAll/manifest.json` and `Version` in `CollectAll/Plugin.cs` together; the build fails if they differ.

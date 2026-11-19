@@ -2,7 +2,8 @@
 #
 # Every run: download the "CollectAll-<version>" artifact. It holds the zip
 # to upload to thunderstore.io as-is.
-# Push a tag like collectall-v1.0.5 to also attach the zip to a GitHub release.
+# Every push to main with a new manifest version_number publishes a GitHub
+# release "CollectAll <version>" (tag collectall-v<version>) with the zip.
 #
 # Game assemblies come from the Valheim dedicated server (free, anonymous
 # Steam download); BepInEx comes from the BepInExPack_Valheim version the
@@ -79,10 +80,21 @@ jobs:
             package/CollectAll/CollectAll.dll
           if-no-files-found: error
 
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/collectall-v')
+      - name: Publish release
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/collectall-v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "CollectAll ${GITHUB_REF_NAME#collectall-v}" --notes ""
-          gh release upload "$GITHUB_REF_NAME" "${{ steps.zip.outputs.path }}" --clobber
+          ver=$(jq -r .version_number package/CollectAll/manifest.json)
+          tag="collectall-v$ver"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            if [ "$GITHUB_REF" = "refs/tags/$tag" ]; then
+              gh release upload "$tag" "${{ steps.zip.outputs.path }}" --clobber
+            else
+              echo "Release $tag already exists; bump version_number to publish a new one."
+            fi
+          else
+            gh release create "$tag" "${{ steps.zip.outputs.path }}" \
+              --target "$GITHUB_SHA" --title "CollectAll $ver" \
+              --notes "Thunderstore package for CollectAll $ver. Upload the attached zip as-is."
+          fi

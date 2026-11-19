@@ -3,7 +3,9 @@
 # Every run: download the "dcarrigg-CollectAll-<version>" artifact. It holds the zip
 # to upload to thunderstore.io as-is.
 # Every push to main with a new manifest version_number publishes a GitHub
-# release "CollectAll <version>" (tag collectall-v<version>) with the zip.
+# release "CollectAll <version>" (tag collectall-v<version>) with the zip,
+# and publishes that version to Thunderstore (team dcarrigg, community valheim)
+# with tcli, using the TCLI_AUTH_TOKEN repo secret.
 #
 # Game assemblies come from the Valheim dedicated server (free, anonymous
 # Steam download); BepInEx comes from the BepInExPack_Valheim version the
@@ -79,6 +81,51 @@ jobs:
             package/CollectAll/README.md
             package/CollectAll/CollectAll.dll
           if-no-files-found: error
+
+      - name: Install tcli
+        run: dotnet tool install -g tcli --version 0.2.4
+
+      # Runs on PRs too: catches config mistakes and bad category slugs
+      # before anything is published.
+      - name: Check Thunderstore config
+        working-directory: package/CollectAll
+        run: |
+          tcli build --package-version "$(jq -r .version_number manifest.json)"
+          slugs=$(curl -fsSL https://thunderstore.io/api/experimental/community/valheim/category/ | jq -r '(.results // .)[].slug')
+          for c in $(sed -n '/^\[publish.categories\]/,/^\[/{s/^valheim *= *\[\(.*\)\]/\1/p}' thunderstore.toml | tr -d '" ' | tr ',' ' '); do
+            echo "$slugs" | grep -qx "$c" || { echo "Unknown Valheim category '$c'. Valid: $(echo $slugs)"; exit 1; }
+          done
+
+      # A version counts as new until its GitHub release exists, so re-runs
+      # and pushes that don't bump version_number publish nothing.
+      - name: Is this a new version?
+        id: ver
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver=$(jq -r .version_number package/CollectAll/manifest.json)
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          if gh release view "collectall-v$ver" >/dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "collectall-v$ver already released; bump version_number to publish a new one."
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to Thunderstore
+        if: steps.ver.outputs.new == 'true'
+        working-directory: package/CollectAll
+        env:
+          TCLI_AUTH_TOKEN: ${{ secrets.TCLI_AUTH_TOKEN }}
+        run: |
+          ver=${{ steps.ver.outputs.version }}
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://thunderstore.io/api/experimental/package/dcarrigg/CollectAll/$ver/")
+          if [ "$code" = "200" ]; then
+            echo "CollectAll $ver is already on Thunderstore."
+          else
+            tcli publish --file "$GITHUB_WORKSPACE/${{ steps.zip.outputs.path }}" --package-version "$ver"
+          fi
 
       - name: Publish release
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/collectall-v')

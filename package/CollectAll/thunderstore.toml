@@ -1,0 +1,32 @@
+# Thunderstore CLI (tcli) config. Used by CI to publish the zip that
+# package/build-collectall.ps1 builds. The version comes from manifest.json
+# (passed with --package-version), so only manifest.json needs bumping.
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "dcarrigg"
+name = "CollectAll"
+versionNumber = "0.0.0"
+description = "Open a chest, click Collect, click an item: every other stack of that item in nearby chests moves into this chest. Alt+click does it in one step."
+websiteUrl = "https://github.com/d-carrigg/ValheimMods"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2360"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "../../dist/tcli"
+
+[[build.copy]]
+source = "./CollectAll.dll"
+target = "/"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["valheim"]
+
+[publish.categories]
+valheim = ["mods"]

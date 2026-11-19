@@ -1,6 +1,6 @@
 # Thunderstore CLI (tcli) config. Used by CI to publish the zip that
 # package/build-collectall.ps1 builds. The version comes from manifest.json
-# (passed with --package-version), so only manifest.json needs bumping.
+# (written in by CI before publishing), so only manifest.json needs bumping.
 [config]
 schemaVersion = "0.0.1"
 

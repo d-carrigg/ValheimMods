@@ -1,6 +1,6 @@
 {
   "name": "CollectAll",
-  "version_number": "1.0.9",
+  "version_number": "1.0.10",
   "website_url": "",
   "description": "Alt+click an item in a chest to pull all other stacks of it from nearby chests into that chest",
   "dependencies": [

@@ -36,7 +36,7 @@ The button is pinned to the top-right corner of the chest panel, so it stays put
 - Chests someone has open
 - The Obliterator, carts, ships, tombstones
 - Chests you don't have access to (other players' private chests, chests inside a ward you aren't on)
-- In multiplayer: chests another player's game controls (always fine in single player; usually fine when you're alone in your base). `ClaimChestOwnership` lets it take control of those (never ones someone has open).
+- In multiplayer: chests another player's game controls (always fine in single player; usually fine when you're alone in your base).
 
 ## Config
 
@@ -48,7 +48,6 @@ The button is pinned to the top-right corner of the chest panel, so it stays put
 | `AltClickShortcut` | on | Alt + click collects straight away |
 | `SkipFullChests` | on | Never take from a chest that's completely full and holds nothing but that item. One stray item, a partial stack or an empty slot and it's collected from as normal. Turn off to move a whole stash into a new chest |
 | `SkipBiggerPiles` | off | Bigger pile wins (see above) |
-| `ClaimChestOwnership` | off | Multiplayer only, see above |
 | `Button.Text` | Collect | Button label |
 | `Button.OffsetX` / `OffsetY` | 0 | Nudge the button if it overlaps another mod's button |
 

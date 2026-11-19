@@ -27,7 +27,7 @@ If you turn on `SkipBiggerPiles`, it also skips any chest that has more of the i
 - Chests someone has open
 - The Obliterator, carts, ships and tombstones
 - Private chests that aren't yours, and chests inside a ward you're not on
-- In multiplayer, chests another player's game is in charge of. Turn on `ClaimChestOwnership` to take from those too.
+- In multiplayer, chests another player's game is in charge of
 
 ## Install
 
@@ -45,7 +45,6 @@ Settings are in `BepInEx/config/dcarrigg.collectall.cfg`, or the config editor i
 | `AltClickShortcut` | true | Alt + click collects in one step |
 | `SkipFullChests` | true | Leave chests full of only that item alone. Turn off to move a whole stash |
 | `SkipBiggerPiles` | false | Leave chests that have more of the item alone |
-| `ClaimChestOwnership` | false | Multiplayer only. Also take from chests another player's game controls. With lag this can duplicate or lose items |
 | `Button.Text` | Collect | Button label |
 | `Button.OffsetX` / `Button.OffsetY` | 0 | Move the button if another mod's button is in the way |
 
@@ -57,7 +56,7 @@ The button sits in the corner of the chest panel, so it doesn't fight with other
 
 ## How it moves items
 
-It uses the game's own inventory code. After each move it recounts both chests and fixes any difference, so nothing gets duplicated or lost. The one exception is `ClaimChestOwnership` under lag.
+It uses the game's own inventory code. After each move it recounts both chests and fixes any difference, so nothing gets duplicated or lost.
 
 ## Bugs and ideas
 

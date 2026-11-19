@@ -15,7 +15,7 @@ public class Plugin : BaseUnityPlugin
     /// <summary>Display name.</summary>
     public const string Name = "CollectAll";
     /// <summary>Plugin version; keep in step with the Thunderstore manifest.</summary>
-    public const string Version = "1.0.9";
+    public const string Version = "1.0.10";
 
     internal static ManualLogSource Log;
 
@@ -23,7 +23,6 @@ public class Plugin : BaseUnityPlugin
     internal static ConfigEntry<bool> AltClickShortcut;
     internal static ConfigEntry<bool> SkipBiggerPiles;
     internal static ConfigEntry<bool> SkipFullChests;
-    internal static ConfigEntry<bool> ClaimChestOwnership;
     internal static ConfigEntry<string> ButtonText;
     internal static ConfigEntry<float> ButtonOffsetX;
     internal static ConfigEntry<float> ButtonOffsetY;
@@ -47,11 +46,6 @@ public class Plugin : BaseUnityPlugin
             "Never take from a chest that is completely full and holds nothing but that item (a finished stash). " +
             "A chest with any other item, a partial stack or an empty slot is still collected from. " +
             "Works on its own or together with SkipBiggerPiles.");
-        ClaimChestOwnership = Config.Bind("General", "ClaimChestOwnership", false,
-            "Multiplayer only. Off: only chests your game controls are collected from (always true in single player, " +
-            "and usually when nobody else is nearby). On: also take control of other chests that hold the item (never " +
-            "ones someone has open). Risky with lag: if a friend changed that chest a moment ago and it hasn't reached " +
-            "you yet, items can be duplicated or lost.");
         ButtonText = Config.Bind("Button", "Text", "Collect", "Label on the button in the chest window.");
         ButtonOffsetX = Config.Bind("Button", "OffsetX", 0f, "Nudge the button sideways (pixels) if it overlaps something, e.g. another mod's button.");
         ButtonOffsetY = Config.Bind("Button", "OffsetY", 0f, "Nudge the button up/down (pixels).");

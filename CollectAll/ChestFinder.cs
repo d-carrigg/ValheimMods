@@ -57,12 +57,8 @@ internal static class ChestFinder
                 // Changes only save if our game controls the chest on the network.
                 if (!nview.IsOwner())
                 {
-                    if (Plugin.ClaimChestOwnership.Value && !IsOpenByAnyone(container, nview)) nview.ClaimOwnership();
-                    if (!nview.IsOwner())
-                    {
-                        found.NotOwned++;
-                        continue;
-                    }
+                    found.NotOwned++;
+                    continue;
                 }
                 Refresh(container);
                 if (!nview.IsValid() || !nview.IsOwner()) continue;

@@ -1,6 +1,6 @@
 # CollectAll
 
-Open a chest, click Collect, then click an item. Every stack of that item in the chests around you gets pulled into the one you have open.
+Open a chest and Alt+click an item, or click Collect and then the item. Every stack of that item in the chests around you gets pulled into the one you have open.
 
 ![Click Collect, pick Molten Core, and the stacks from nearby chests land in this one](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/collectall-demo.gif)
 

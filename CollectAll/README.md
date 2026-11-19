@@ -1,6 +1,6 @@
 # CollectAll
 
-A BepInEx mod for Valheim. Open a chest, click **Collect**, click an item: every other stack of that item in chests nearby moves into the chest you have open.
+A BepInEx mod for Valheim. Open a chest and Alt+click an item (or click **Collect**, then the item): every other stack of that item in chests nearby moves into the chest you have open.
 
 ![CollectAll mock-up](../docs/screenshots/collectall.png)
 

@@ -10,15 +10,16 @@ namespace CollectAll
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "local.collectall";
+        public const string Guid = "dcarrigg.collectall";
         public const string Name = "CollectAll";
-        public const string Version = "1.0.3";
+        public const string Version = "1.0.5";
 
         internal static ManualLogSource Log;
 
         internal static ConfigEntry<float> Radius;
         internal static ConfigEntry<bool> AltClickShortcut;
         internal static ConfigEntry<bool> SkipBiggerPiles;
+        internal static ConfigEntry<bool> SkipFullChests;
         internal static ConfigEntry<bool> ClaimChestOwnership;
         internal static ConfigEntry<string> ButtonText;
         internal static ConfigEntry<float> ButtonOffsetX;
@@ -30,15 +31,19 @@ namespace CollectAll
         {
             Log = Logger;
 
-            Radius = Config.Bind("General", "Radius", 30f, new ConfigDescription(
+            Radius = Config.Bind("General", "Radius", 60f, new ConfigDescription(
                 "How far (meters) from the open chest to look for more of the item.",
                 new AcceptableValueRange<float>(2f, 100f)));
             AltClickShortcut = Config.Bind("General", "AltClickShortcut", true,
                 "Alt + click an item in the chest to collect it straight away, without pressing the button first.");
-            SkipBiggerPiles = Config.Bind("General", "SkipBiggerPiles", true,
+            SkipBiggerPiles = Config.Bind("General", "SkipBiggerPiles", false,
                 "Bigger pile wins: never take from a chest that holds more of the item than the chest you're collecting " +
                 "into. Items only flow toward your biggest pile, so collecting in two chests can't shuffle them back and " +
                 "forth. Turn off to pull from every chest regardless (e.g. to move a whole stash into a new chest).");
+            SkipFullChests = Config.Bind("General", "SkipFullChests", true,
+                "Never take from a chest that is completely full and holds nothing but that item (a finished stash). " +
+                "A chest with any other item, a partial stack or an empty slot is still collected from. " +
+                "Works on its own or together with SkipBiggerPiles.");
             ClaimChestOwnership = Config.Bind("General", "ClaimChestOwnership", false,
                 "Multiplayer only. Off: only chests your game controls are collected from (always true in single player, " +
                 "and usually when nobody else is nearby). On: also take control of other chests that hold the item (never " +

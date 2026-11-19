@@ -10,9 +10,11 @@ A BepInEx mod for Valheim. Open a chest, click **Collect**, click an item: every
 
 1. Open the chest you want things gathered into.
 2. Click **Collect** in the top-right corner of the chest panel, next to the chest's name. It changes to **Pick item...**
-3. Click an item, in the chest or in your own inventory. All other stacks of that item (any quality) in chests within 30 m move into this chest. Smaller piles are taken first, and existing stacks are topped up before new slots are used.
+3. Click an item, in the chest or in your own inventory. All other stacks of that item (any quality) in chests within 60 m move into this chest. Smaller piles are taken first, and existing stacks are topped up before new slots are used.
 
-**Bigger pile wins** (on by default): a chest that holds *more* of the item than the one you're collecting into is left alone. Items only ever flow toward your biggest pile, so collecting in two chests in turn can't shuffle them back and forth. To gather scattered piles, open the chest with the most and collect there.
+**Full stashes are left alone** (on by default): a chest that is completely full and holds nothing but that item is never taken from, so collecting in a second chest can't drain a finished stash.
+
+**Bigger pile wins** (off by default, `SkipBiggerPiles`): a chest that holds *more* of the item than the one you're collecting into is left alone. Items then only ever flow toward your biggest pile, so collecting in two chests in turn can't shuffle them back and forth.
 
 Shortcut: **Alt + click** an item in the chest does it in one step.
 
@@ -20,8 +22,9 @@ Right-click or Esc cancels pick mode. The message in the middle of the screen sa
 
 - `Collected 120 Fine wood from 3 chests`
 - `Chest is full - 45 more still elsewhere`
-- `No other Fine wood in chests within 30 m`
-- `Other chests have more Fine wood than this one`
+- `No other Fine wood in chests within 60 m`
+- `The only other Fine wood is in full Fine wood chests - left alone`
+- `Other chests have more Fine wood than this one` (with `SkipBiggerPiles` on)
 - `2 chests skipped (open, or another player's)`
 
 Your own inventory is never touched; only other chests are emptied.
@@ -37,13 +40,14 @@ The button is pinned to the top-right corner of the chest panel, so it stays put
 
 ## Config
 
-`BepInEx/config/local.collectall.cfg` (r2modman: Config editor):
+`BepInEx/config/dcarrigg.collectall.cfg` (r2modman: Config editor):
 
 | Setting | Default | |
 |---|---|---|
-| `Radius` | 30 | How far from the open chest to look (m) |
+| `Radius` | 60 | How far from the open chest to look (m). The game only keeps about 64 m around you loaded |
 | `AltClickShortcut` | on | Alt + click collects straight away |
-| `SkipBiggerPiles` | on | Bigger pile wins (see above). Turn off to pull from every chest, e.g. to move a whole stash into a new chest |
+| `SkipFullChests` | on | Never take from a chest that's completely full and holds nothing but that item. One stray item, a partial stack or an empty slot and it's collected from as normal. Turn off to move a whole stash into a new chest |
+| `SkipBiggerPiles` | off | Bigger pile wins (see above) |
 | `ClaimChestOwnership` | off | Multiplayer only, see above |
 | `Button.Text` | Collect | Button label |
 | `Button.OffsetX` / `OffsetY` | 0 | Nudge the button if it overlaps another mod's button |

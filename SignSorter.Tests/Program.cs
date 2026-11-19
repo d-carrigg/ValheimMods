@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SignSorter;
@@ -621,6 +621,36 @@ namespace SignSorterTests
                 Eq(20, CollectWith(true, b, "Bone fragments", Src(a, 1f)).Moved);
                 Eq(0, CollectWith(true, a, "Bone fragments", Src(b, 1f)).Moved);
             });
+            T("full chests: a chest full of only that item is left alone", () =>
+            {
+                var target = Chest(null, ("Bone fragments", 30));
+                var stash = Src(Chest(null, w: 2, h: 1, items: new[] { ("Bone fragments", 50), ("Bone fragments", 50) }), 2f);
+                var r = CollectWith2(false, true, target, "Bone fragments", stash);
+                Eq(0, r.Moved);
+                Eq(1, r.FullSkipped);
+                Eq(100, CountInv(stash.Inventory, "Bone fragments"));
+            });
+            T("full chests: one stray item means it's collected from", () =>
+            {
+                var target = Chest(null, ("Bone fragments", 30));
+                var mixed = Src(Chest(null, w: 2, h: 1, items: new[] { ("Bone fragments", 50), ("Resin", 1) }), 2f);
+                var r = CollectWith2(false, true, target, "Bone fragments", mixed);
+                Eq(50, r.Moved);
+                Eq(1, CountInv(mixed.Inventory, "Resin"));
+            });
+            T("full chests: a partial stack or empty slot means it's collected from", () =>
+            {
+                var target = Chest(null, ("Bone fragments", 30));
+                var partial = Src(Chest(null, w: 2, h: 1, items: new[] { ("Bone fragments", 50), ("Bone fragments", 49) }), 2f);
+                var roomy = Src(Chest(null, w: 3, h: 1, items: new[] { ("Bone fragments", 50), ("Bone fragments", 50) }), 3f);
+                Eq(199, CollectWith2(false, true, target, "Bone fragments", partial, roomy).Moved);
+            });
+            T("full chests: off still empties a full stash", () =>
+            {
+                var target = Chest(null, ("Bone fragments", 30));
+                var stash = Src(Chest(null, w: 1, h: 1, items: new[] { ("Bone fragments", 50) }), 2f);
+                Eq(50, CollectWith2(false, false, target, "Bone fragments", stash).Moved);
+            });
             T("bigger pile: off pulls from every chest", () =>
             {
                 var target = Chest(null, ("Bone fragments", 30));
@@ -798,7 +828,10 @@ namespace SignSorterTests
         private static CollectAll.CollectResult Collect(SortChest target, string itemName, params CollectAll.CollectSource[] sources) =>
             CollectWith(false, target, itemName, sources);
 
-        private static CollectAll.CollectResult CollectWith(bool skipBiggerPiles, SortChest target, string itemName, params CollectAll.CollectSource[] sources)
+        private static CollectAll.CollectResult CollectWith(bool skipBiggerPiles, SortChest target, string itemName, params CollectAll.CollectSource[] sources) =>
+            CollectWith2(skipBiggerPiles, false, target, itemName, sources);
+
+        private static CollectAll.CollectResult CollectWith2(bool skipBiggerPiles, bool skipFullChests, SortChest target, string itemName, params CollectAll.CollectSource[] sources)
         {
             var example = target.Inventory.GetAllItems().FirstOrDefault(i => i.m_shared.m_name == itemName)
                 ?? sources.SelectMany(s => s.Inventory.GetAllItems()).FirstOrDefault(i => i.m_shared.m_name == itemName)
@@ -806,7 +839,7 @@ namespace SignSorterTests
             var all = new List<Inventory> { target.Inventory };
             all.AddRange(sources.Select(s => s.Inventory).Where(i => !ReferenceEquals(i, target.Inventory)));
             var before = Describe(TotalsOf(all));
-            var r = CollectAll.Collector.Collect(target.Inventory, example, sources, (w, e) => { }, skipBiggerPiles);
+            var r = CollectAll.Collector.Collect(target.Inventory, example, sources, (w, e) => { }, skipBiggerPiles, skipFullChests);
             Eq(before, Describe(TotalsOf(all)), "items conserved");
             foreach (var inv in all) CheckGrid(inv, "after collect");
             return r;
@@ -833,7 +866,21 @@ namespace SignSorterTests
                 }
                 string name = FuzzItems[rng.Next(FuzzItems.Length)];
                 bool bigger = rng.Next(2) == 0;
-                var r = CollectWith(bigger, target, name, sources.ToArray());
+                bool full = rng.Next(2) == 0;
+                // A few full single-item chests, so the full-chest rule actually gets exercised.
+                if (rng.Next(4) == 0)
+                {
+                    var stash = Chest(null, w: rng.Next(1, 3), h: 1);
+                    while (stash.Inventory.HaveEmptySlot())
+                    {
+                        var it = FuzzItem(rng);
+                        it.m_shared = sources.SelectMany(x => x.Inventory.GetAllItems()).Select(i => i.m_shared).FirstOrDefault(sh => sh.m_name == name) ?? it.m_shared;
+                        it.m_stack = it.m_shared.m_maxStackSize;
+                        stash.Inventory.AddItem(it);
+                    }
+                    sources.Add(Src(stash, rng.Next(0, 30)));
+                }
+                var r = CollectWith2(bigger, full, target, name, sources.ToArray());
                 string where = $"round {round}";
                 Eq(0, r.Errors, where + " errors");
 
@@ -843,6 +890,7 @@ namespace SignSorterTests
                 foreach (var src in sources.Where(s => !s.Busy))
                 {
                     if (bigger && CollectAll.Collector.CountOf(src.Inventory, name) > targetHas) continue;
+                    if (full && CollectAll.Collector.IsFullOfOnly(src.Inventory, name)) continue;
                     foreach (var left in src.Inventory.GetAllItems().Where(i => i.m_shared.m_name == name))
                         Eq(0, ChestShared.InventoryOps.FreeSpaceFor(target.Inventory, left), $"{where}: {name} left behind although it fits");
                 }

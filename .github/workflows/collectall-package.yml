@@ -1,0 +1,88 @@
+# Builds CollectAll and produces the Thunderstore upload zip.
+#
+# Every run: download the "CollectAll-<version>" artifact. It holds the zip
+# to upload to thunderstore.io as-is.
+# Push a tag like collectall-v1.0.5 to also attach the zip to a GitHub release.
+#
+# Game assemblies come from the Valheim dedicated server (free, anonymous
+# Steam download); BepInEx comes from the BepInExPack_Valheim version the
+# manifest depends on.
+name: CollectAll package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['CollectAll/**', 'Shared/**', 'package/**', '.github/workflows/collectall-package.yml']
+  push:
+    branches: [main]
+    tags: ['collectall-v*']
+    paths: ['CollectAll/**', 'Shared/**', 'package/**', '.github/workflows/collectall-package.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Download Valheim dedicated server assemblies
+        run: |
+          mkdir -p "$RUNNER_TEMP/steamcmd" && cd "$RUNNER_TEMP/steamcmd"
+          curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar xz
+          # steamcmd updates itself on first run and sometimes exits early; retry.
+          for i in 1 2 3; do
+            ./steamcmd.sh +force_install_dir "$RUNNER_TEMP/valheim" +login anonymous +app_update 896660 validate +quit && break
+            sleep 5
+          done
+          managed="$RUNNER_TEMP/valheim/valheim_server_Data/Managed"
+          test -f "$managed/assembly_valheim.dll"
+          echo "MANAGED_DIR=$managed" >> "$GITHUB_ENV"
+
+      - name: Download BepInExPack_Valheim
+        run: |
+          dep=$(jq -r '.dependencies[] | select(startswith("denikson-BepInExPack_Valheim-"))' package/CollectAll/manifest.json)
+          ver=${dep##*-}
+          curl -fsSL -o "$RUNNER_TEMP/bepinex.zip" "https://thunderstore.io/package/download/denikson/BepInExPack_Valheim/$ver/"
+          unzip -q "$RUNNER_TEMP/bepinex.zip" -d "$RUNNER_TEMP/bepinex"
+          core=$(dirname "$(find "$RUNNER_TEMP/bepinex" -path '*/BepInEx/core/BepInEx.dll' | head -1)")
+          test -f "$core/0Harmony.dll"
+          echo "BEPINEX_DIR=$(dirname "$core")" >> "$GITHUB_ENV"
+
+      - name: Build and zip
+        shell: pwsh
+        run: ./package/build-collectall.ps1 -ManagedDir $env:MANAGED_DIR -BepInExDir $env:BEPINEX_DIR
+
+      - name: Check zip layout
+        id: zip
+        run: |
+          zip=$(ls dist/CollectAll-*.zip)
+          unzip -Z1 "$zip" | sort > contents.txt
+          printf '%s\n' CollectAll.dll README.md icon.png manifest.json | diff - contents.txt
+          echo "path=$zip" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$zip" .zip)" >> "$GITHUB_OUTPUT"
+
+      # The artifact is the four files, so the downloaded artifact zip is
+      # itself the upload-ready package.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.zip.outputs.name }}
+          path: |
+            package/CollectAll/manifest.json
+            package/CollectAll/icon.png
+            package/CollectAll/README.md
+            package/CollectAll/CollectAll.dll
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/collectall-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "CollectAll ${GITHUB_REF_NAME#collectall-v}" --notes ""
+          gh release upload "$GITHUB_REF_NAME" "${{ steps.zip.outputs.path }}" --clobber

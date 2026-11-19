@@ -13,7 +13,7 @@
          dotnet build -p:ValheimDir="..." -p:BepInExDir="..." -->
     <ValheimDir Condition="'$(ValheimDir)' == ''">E:\SteamLibrary\steamapps\common\Valheim</ValheimDir>
     <BepInExDir Condition="'$(BepInExDir)' == ''">$(APPDATA)\r2modmanPlus-local\Valheim\profiles\first - Copy\BepInEx</BepInExDir>
-    <ManagedDir>$(ValheimDir)\valheim_Data\Managed</ManagedDir>
+    <ManagedDir Condition="'$(ManagedDir)' == ''">$(ValheimDir)\valheim_Data\Managed</ManagedDir>
   </PropertyGroup>
 
   <ItemGroup>

@@ -2,6 +2,20 @@
 
 A BepInEx mod for Valheim. Open a chest, click **Collect**, click an item: every other stack of that item in chests nearby moves into the chest you have open.
 
+## Screenshots
+
+Open a chest and click **Collect**:
+
+![Chest open with the Collect button](https://raw.githubusercontent.com/d-carrigg/CollectAll/main/screenshots/1-before.jpg)
+
+Click the item you want gathered:
+
+![Pick mode: click an item to collect all of it into this chest](https://raw.githubusercontent.com/d-carrigg/CollectAll/main/screenshots/2-pick-item.jpg)
+
+Every stack of it from nearby chests is now in this one:
+
+![The chest after collecting, with the stacks gathered](https://raw.githubusercontent.com/d-carrigg/CollectAll/main/screenshots/3-after.jpg)
+
 ## Using it
 
 1. Open the chest you want things gathered into.

@@ -1,6 +1,5 @@
 {
   "name": "CollectAll",
-  "author": "Darin Carrigg",
   "version_number": "1.0.5",
   "website_url": "",
   "description": "Open a chest, click Collect, click an item: every other stack of that item in nearby chests moves into this chest. Alt+click does it in one step.",

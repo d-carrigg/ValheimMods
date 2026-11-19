@@ -4,7 +4,7 @@ BepInEx mods for Valheim.
 
 | Mod | What it does |
 |---|---|
-| [CollectAll](CollectAll/README.md) | Open a chest, click **Collect**, click an item: every other stack of that item in nearby chests moves into this chest. Alt+click does it in one step. |
+| [CollectAll](CollectAll/README.md) | Alt+click an item in a chest to pull all other stacks of it from nearby chests into that chest. |
 | [SignSorter](SignSorter/README.md) | Label chests with signs; items sort themselves into the matching chest. (Not currently in use.) |
 
 ## Layout

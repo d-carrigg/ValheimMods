@@ -8,7 +8,7 @@ schemaVersion = "0.0.1"
 namespace = "dcarrigg"
 name = "CollectAll"
 versionNumber = "0.0.0"
-description = "Open a chest, click Collect, click an item: every other stack of that item in nearby chests moves into this chest. Alt+click does it in one step."
+description = "Alt+click an item in a chest to pull all other stacks of it from nearby chests into that chest"
 websiteUrl = "https://github.com/d-carrigg/ValheimMods"
 containsNsfwContent = false
 

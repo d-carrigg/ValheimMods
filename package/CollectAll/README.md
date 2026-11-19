@@ -2,9 +2,7 @@
 
 Open a chest, click Collect, then click an item. Every stack of that item in the chests around you gets pulled into the one you have open.
 
-![Collecting Molten Core from 4 chests in one click](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/collect.gif)
-
-![Chest open with the Collect button](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/1-before.jpg)
+![Click Collect, pick Molten Core, and the stacks from nearby chests land in this one](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/collect-demo.gif)
 
 ## How to use
 
@@ -17,16 +15,6 @@ It grabs that item from every chest within 60 m, any quality, and tops up existi
 Alt + click an item in the chest to skip the button. Right-click or Esc cancels.
 
 A message in the middle of the screen tells you what it did, like `Collected 120 Fine wood from 3 chests`.
-
-## Screenshots
-
-Pick the item you want:
-
-![Pick mode: click an item to collect all of it into this chest](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/2-pick-item.jpg)
-
-Everything from the nearby chests ends up here:
-
-![The chest after collecting, with the stacks gathered](https://raw.githubusercontent.com/d-carrigg/ValheimMods/main/docs/screenshots/ingame/3-after.jpg)
 
 ## Keeping your stashes intact
 

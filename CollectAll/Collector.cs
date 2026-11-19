@@ -31,6 +31,7 @@ namespace CollectAll
         public int LeftBehind;           // units still in other chests (target ran out of room)
         public int BusySkipped;          // chests with the item that were open, so left alone
         public int BiggerSkipped;        // chests holding more of the item than the target, so left alone
+        public int FullSkipped;          // chests completely full of nothing but this item, so left alone
         public int Errors;
         public bool TargetFull => LeftBehind > 0;
     }
@@ -52,8 +53,12 @@ namespace CollectAll
         /// does at that moment. Items then only flow toward the biggest pile, so collecting in
         /// two chests in turn can never shuffle items back and forth.
         /// </param>
+        /// <param name="skipFullChests">
+        /// Never take from a chest that is completely full and holds nothing but this item (a
+        /// finished stash). One stray item, a partial stack or an empty slot means it isn't one.
+        /// </param>
         public static CollectResult Collect(Inventory target, ItemDrop.ItemData example, IEnumerable<CollectSource> sources,
-            Action<string, Exception> warn, bool skipBiggerPiles = true)
+            Action<string, Exception> warn, bool skipBiggerPiles, bool skipFullChests)
         {
             var result = new CollectResult { ItemName = example?.m_shared?.m_name };
             if (target == null || result.ItemName == null) return result;
@@ -87,6 +92,12 @@ namespace CollectAll
                 if (source.Busy)
                 {
                     result.BusySkipped++;
+                    continue;
+                }
+
+                if (skipFullChests && IsFullOfOnly(source.Inventory, result.ItemName))
+                {
+                    result.FullSkipped++;
                     continue;
                 }
 
@@ -125,6 +136,23 @@ namespace CollectAll
                 if (tookAny) result.ChestsTakenFrom++;
             }
             return result;
+        }
+
+        /// <summary>
+        /// True when every slot is taken, every item is <paramref name="itemName"/>, and every
+        /// stack is at its maximum.
+        /// </summary>
+        internal static bool IsFullOfOnly(Inventory inv, string itemName)
+        {
+            if (inv == null || inv.GetEmptySlots() > 0) return false;
+            List<ItemDrop.ItemData> items = inv.GetAllItems();
+            if (items.Count == 0) return false;
+            foreach (ItemDrop.ItemData item in items)
+            {
+                if (item.m_shared.m_name != itemName) return false;
+                if (item.m_stack < Math.Max(1, item.m_shared.m_maxStackSize)) return false;
+            }
+            return true;
         }
 
         /// <summary>How many of this item (any quality) an inventory holds.</summary>

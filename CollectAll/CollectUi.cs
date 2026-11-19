@@ -54,7 +54,7 @@ namespace CollectAll
                 GameObject go = Object.Instantiate(template.gameObject, __instance.m_container);
                 go.name = "CollectAllButton";
                 go.SetActive(true); // another mod may have hidden the original
-
+                
                 foreach (Component c in go.GetComponentsInChildren<Component>(true))
                 {
                     if (c != null && Array.IndexOf(StripComponents, c.GetType().Name) >= 0) Object.DestroyImmediate(c);
@@ -227,7 +227,8 @@ namespace CollectAll
             ChestFinder.Found found = ChestFinder.ChestsAround(target, player, Plugin.Radius.Value, example.m_shared.m_name);
             CollectResult result = Collector.Collect(target.GetInventory(), example, found.Sources,
                 (what, e) => Plugin.Log.LogWarning($"{what}: {e.GetType().Name}: {e.Message}"),
-                Plugin.SkipBiggerPiles.Value);
+                Plugin.SkipBiggerPiles.Value,
+                Plugin.SkipFullChests.Value);
 
             Message(Describe(result, found.NotOwned, Plugin.Radius.Value, Localize(result.ItemName)));
             if (result.Moved > 0)
@@ -250,6 +251,10 @@ namespace CollectAll
             {
                 text = $"Other chests have more {name} than this one\nCollect into the biggest pile instead";
             }
+            else if (r.FullSkipped > 0)
+            {
+                text = $"The only other {name} is in full {name} chests - left alone";
+            }
             else
             {
                 text = $"No other {name} in chests within {radius:0} m";
@@ -257,6 +262,8 @@ namespace CollectAll
 
             if (r.Moved > 0 && r.BiggerSkipped > 0)
                 text += $"\n{r.BiggerSkipped} chest{(r.BiggerSkipped == 1 ? "" : "s")} with more {name} left alone";
+            if (r.Moved > 0 && r.FullSkipped > 0)
+                text += $"\n{r.FullSkipped} full {name} chest{(r.FullSkipped == 1 ? "" : "s")} left alone";
 
             int skipped = r.BusySkipped + notOwned;
             if (skipped > 0) text += $"\n{skipped} chest{(skipped == 1 ? "" : "s")} skipped (open, or another player's)";

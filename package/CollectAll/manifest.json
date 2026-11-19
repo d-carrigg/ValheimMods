@@ -1,8 +1,8 @@
 {
   "name": "CollectAll",
-  "version_number": "1.0.12",
+  "version_number": "1.0.13",
   "website_url": "",
-  "description": "Alt+click an item in a chest to pull all other stacks of it from nearby chests into that chest",
+  "description": "Alt+click an item in a chest to gather all of it from nearby chests. Simplifies chest management.",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2360"
   ]

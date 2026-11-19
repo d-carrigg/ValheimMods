@@ -15,7 +15,7 @@ public class Plugin : BaseUnityPlugin
     /// <summary>Display name.</summary>
     public const string Name = "CollectAll";
     /// <summary>Plugin version; keep in step with the Thunderstore manifest.</summary>
-    public const string Version = "1.0.12";
+    public const string Version = "1.0.13";
 
     internal static ManualLogSource Log;
 

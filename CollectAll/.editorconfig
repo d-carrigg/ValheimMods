@@ -1,0 +1,25 @@
+# Code style for CollectAll. Checked on every build (EnforceCodeStyleInBuild in the csproj).
+
+[*.cs]
+charset = utf-8
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# File-scoped namespaces.
+csharp_style_namespace_declarations = file_scoped:error
+dotnet_diagnostic.IDE0161.severity = error
+
+# No unused usings.
+dotnet_diagnostic.IDE0005.severity = error
+
+# Expression bodies (=>) where they fit on one line.
+csharp_style_expression_bodied_properties = true:warning
+csharp_style_expression_bodied_indexers = true:warning
+csharp_style_expression_bodied_accessors = true:warning
+csharp_style_expression_bodied_lambdas = true:warning
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+
+# Public API needs /// XML doc comments, not trailing // comments.
+dotnet_diagnostic.CS1591.severity = error

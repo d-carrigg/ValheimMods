@@ -7,6 +7,8 @@
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
 
     <!-- Override these on the command line if your paths differ:

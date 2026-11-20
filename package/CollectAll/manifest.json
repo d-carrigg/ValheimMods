@@ -2,7 +2,7 @@
   "name": "CollectAll",
   "version_number": "1.1.1",
   "website_url": "",
-  "description": "Alt+click an item in a chest to gather all of it from nearby chests. Simplifies chest management.",
+  "description": "Alt+click an item in a chest to gather all of it from nearby chests.",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2360"
   ]

@@ -4,7 +4,7 @@ BepInEx mods for Valheim.
 
 | Mod | What it does |
 |---|---|
-| [CollectAll](CollectAll/README.md) | Alt+click an item in a chest to gather all of it from nearby chests. Simplifies chest management. |
+| [CollectAll](CollectAll/README.md) | Alt+click an item in a chest to gather all of it from nearby chests. |
 | [SignSorter](SignSorter/README.md) | Label chests with signs; items sort themselves into the matching chest. (Not currently in use.) |
 
 ## Layout

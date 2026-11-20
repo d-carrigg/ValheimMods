@@ -8,7 +8,7 @@ schemaVersion = "0.0.1"
 namespace = "dcarrigg"
 name = "CollectAll"
 versionNumber = "0.0.0"
-description = "Alt+click an item in a chest to gather all of it from nearby chests. Simplifies chest management."
+description = "Alt+click an item in a chest to gather all of it from nearby chests."
 websiteUrl = "https://github.com/d-carrigg/ValheimMods"
 containsNsfwContent = false
 

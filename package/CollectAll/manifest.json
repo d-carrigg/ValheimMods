@@ -1,6 +1,6 @@
 {
   "name": "CollectAll",
-  "version_number": "1.1.1",
+  "version_number": "1.1.2",
   "website_url": "",
   "description": "Alt+click an item in a chest to gather all of it from nearby chests.",
   "dependencies": [

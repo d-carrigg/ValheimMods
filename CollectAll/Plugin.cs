@@ -15,12 +15,13 @@ public class Plugin : BaseUnityPlugin
     /// <summary>Display name.</summary>
     public const string Name = "CollectAll";
     /// <summary>Plugin version; keep in step with the Thunderstore manifest.</summary>
-    public const string Version = "1.0.13";
+    public const string Version = "1.1.0";
 
     internal static ManualLogSource Log;
 
     internal static ConfigEntry<float> Radius;
     internal static ConfigEntry<bool> AltClickShortcut;
+    internal static ConfigEntry<UnityEngine.KeyCode> ShortcutKey;
     internal static ConfigEntry<bool> SkipBiggerPiles;
     internal static ConfigEntry<bool> SkipFullChests;
     internal static ConfigEntry<string> ButtonText;
@@ -37,7 +38,10 @@ public class Plugin : BaseUnityPlugin
             "How far (meters) from the open chest to look for more of the item.",
             new AcceptableValueRange<float>(2f, 100f)));
         AltClickShortcut = Config.Bind("General", "AltClickShortcut", true,
-            "Alt + click an item in the chest to collect it straight away, without pressing the button first.");
+            "Hold ShortcutKey and click an item in the chest to collect it straight away, without pressing the button first.");
+        ShortcutKey = Config.Bind("General", "ShortcutKey", UnityEngine.KeyCode.LeftAlt,
+            "Key to hold while clicking an item for the shortcut. Left and right Alt/Ctrl/Shift both count. " +
+            "Shift and Ctrl already do something on click in vanilla; the shortcut replaces that in the chest.");
         SkipBiggerPiles = Config.Bind("General", "SkipBiggerPiles", false,
             "Bigger pile wins: never take from a chest that holds more of the item than the chest you're collecting " +
             "into. Items only flow toward your biggest pile, so collecting in two chests can't shuffle them back and " +

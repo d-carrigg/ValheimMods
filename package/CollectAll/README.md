@@ -12,7 +12,7 @@ Open a chest and Alt+click an item, or click Collect and then the item. Every st
 
 It grabs that item from every chest within 60 m, any quality, and tops up existing stacks before using empty slots. Your own inventory is never touched.
 
-Alt + click an item in the chest to skip the button. Right-click or Esc cancels.
+Alt + click an item in the chest to skip the button (change the key with `ShortcutKey`). Right-click or Esc cancels.
 
 A message in the middle of the screen tells you what it did, like `Collected 120 Fine wood from 3 chests`.
 
@@ -42,7 +42,8 @@ Settings are in `BepInEx/config/dcarrigg.collectall.cfg`, or the config editor i
 | Setting | Default | What it does |
 |---|---|---|
 | `Radius` | 60 | How far to look, in meters (2 to 100). The game only keeps about 64 m around you loaded |
-| `AltClickShortcut` | true | Alt + click collects in one step |
+| `AltClickShortcut` | true | Key + click collects in one step |
+| `ShortcutKey` | LeftAlt | Key to hold for the shortcut, e.g. `LeftControl`, `LeftShift`, `Z` |
 | `SkipFullChests` | true | Leave chests full of only that item alone. Turn off to move a whole stash |
 | `SkipBiggerPiles` | false | Leave chests that have more of the item alone |
 | `Button.Text` | Collect | Button label |

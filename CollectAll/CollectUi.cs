@@ -175,7 +175,7 @@ internal static class CollectUi
         try
         {
             bool altClick = Plugin.AltClickShortcut.Value
-                && (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
+                && ShortcutHeld()
                 && grid != null && ReferenceEquals(grid, ContainerGridField?.GetValue(__instance));
             if (!_pickMode && !altClick) return true; // normal click: game handles it
 
@@ -204,6 +204,20 @@ internal static class CollectUi
             UpdateLabel();
             Plugin.Log.LogError($"Collect failed: {e}");
             return true;
+        }
+    }
+
+    private static bool ShortcutHeld()
+    {
+        KeyCode key = Plugin.ShortcutKey.Value;
+        if (key == KeyCode.None) return false;
+        if (Input.GetKey(key)) return true;
+        switch (key)
+        {
+            case KeyCode.LeftAlt: case KeyCode.RightAlt: return Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
+            case KeyCode.LeftControl: case KeyCode.RightControl: return Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+            case KeyCode.LeftShift: case KeyCode.RightShift: return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            default: return false;
         }
     }
 

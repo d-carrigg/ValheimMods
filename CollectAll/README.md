@@ -16,7 +16,7 @@ A BepInEx mod for Valheim. Open a chest and Alt+click an item (or click **Collec
 
 **Bigger pile wins** (off by default, `SkipBiggerPiles`): a chest that holds *more* of the item than the one you're collecting into is left alone. Items then only ever flow toward your biggest pile, so collecting in two chests in turn can't shuffle them back and forth.
 
-Shortcut: **Alt + click** an item in the chest does it in one step.
+Shortcut: **Alt + click** an item in the chest does it in one step. Change the key with `ShortcutKey`.
 
 Right-click or Esc cancels pick mode. The message in the middle of the screen says what happened:
 
@@ -45,7 +45,8 @@ The button is pinned to the top-right corner of the chest panel, so it stays put
 | Setting | Default | |
 |---|---|---|
 | `Radius` | 60 | How far from the open chest to look (m). The game only keeps about 64 m around you loaded |
-| `AltClickShortcut` | on | Alt + click collects straight away |
+| `AltClickShortcut` | on | Key + click collects straight away |
+| `ShortcutKey` | LeftAlt | Key to hold for the shortcut, e.g. `LeftControl`, `LeftShift`, `Z`. Left/right Alt, Ctrl and Shift both count |
 | `SkipFullChests` | on | Never take from a chest that's completely full and holds nothing but that item. One stray item, a partial stack or an empty slot and it's collected from as normal. Turn off to move a whole stash into a new chest |
 | `SkipBiggerPiles` | off | Bigger pile wins (see above) |
 | `Button.Text` | Collect | Button label |
@@ -68,4 +69,4 @@ Copy only `CollectAll/bin/Release/CollectAll.dll` into `BepInEx/plugins/`. Paths
 Built and tested outside the game only. Things to check in game:
 
 - That its label reads "Collect", not "Place stacks".
-- That Alt + click doesn't clash with another mod you use.
+- That the shortcut key doesn't clash with another mod you use.

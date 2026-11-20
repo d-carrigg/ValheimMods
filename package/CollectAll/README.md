@@ -55,10 +55,6 @@ Client side only. Nothing goes on the server and other players don't need it. Wo
 
 The button sits in the corner of the chest panel, so it doesn't fight with other chest mods like QuickStackStore.
 
-## How it moves items
-
-It uses the game's own inventory code. After each move it recounts both chests and fixes any difference, so nothing gets duplicated or lost.
-
 ## Bugs and ideas
 
 Open an issue on [GitHub](https://github.com/d-carrigg/ValheimMods/issues).

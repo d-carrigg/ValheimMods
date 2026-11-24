@@ -28,12 +28,14 @@ internal static class StatsSync
     private const float BroadcastInterval = 2f;
     private const float SaveInterval = 60f;
     private const float ServerAnswerTimeout = 15f;
+    private const float HelloRetry = 5f;
 
     // Client side
     private static readonly StatsStore Pending = new();
     private static readonly StatsStore Session = new();
     private static StatsStore _fromServer = new();
     private static float _helloSentAt = -1f;
+    private static float _lastHello;
     private static float _lastSend;
     private static bool _serverHasMod;
 
@@ -124,9 +126,11 @@ internal static class StatsSync
 
         if (Player.m_localPlayer == null) return;
 
-        if (_helloSentAt < 0f)
+        // Say hello on arrival, and again every few seconds in case one was lost, until the server answers or we give up.
+        if (_helloSentAt < 0f || (!_serverHasMod && now - _lastHello >= HelloRetry && now - _helloSentAt < ServerAnswerTimeout))
         {
-            _helloSentAt = now;
+            if (_helloSentAt < 0f) _helloSentAt = now;
+            _lastHello = now;
             var hello = new ZPackage();
             hello.Write(Protocol);
             hello.Write(Player.m_localPlayer.GetPlayerID());

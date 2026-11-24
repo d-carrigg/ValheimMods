@@ -25,6 +25,14 @@ internal sealed class StatsStore
 
     private readonly Dictionary<string, Dictionary<string, int>[]> _players = new(StringComparer.Ordinal);
 
+    // Server-side notes saved with the world's stats, such as which one-time scans already ran.
+    // Saved to the file only; never sent to players.
+    private readonly HashSet<string> _flags = new(StringComparer.Ordinal);
+
+    internal bool HasFlag(string flag) => _flags.Contains(flag);
+
+    internal void SetFlag(string flag) => _flags.Add(Clean(flag));
+
     internal IEnumerable<string> Players => _players.Keys.OrderBy(p => p, StringComparer.OrdinalIgnoreCase);
 
     internal bool IsEmpty => _players.Count == 0;
@@ -118,6 +126,7 @@ internal sealed class StatsStore
         using (var w = new StreamWriter(tmp))
         {
             w.WriteLine("# BuildStats: player, category (Built, BuildMaterials, CraftMaterials, Crafted), name, count");
+            foreach (string flag in _flags) w.WriteLine(FlagPrefix + flag);
             foreach (var p in _players)
                 for (int c = 0; c < CategoryCount; c++)
                     foreach (var kv in p.Value[c])
@@ -133,6 +142,7 @@ internal sealed class StatsStore
         if (!File.Exists(path)) return store;
         foreach (string line in File.ReadAllLines(path))
         {
+            if (line.StartsWith(FlagPrefix)) store._flags.Add(line.Substring(FlagPrefix.Length));
             if (line.StartsWith("#")) continue;
             string[] f = line.Split('\t');
             if (f.Length != 4) continue;
@@ -141,6 +151,9 @@ internal sealed class StatsStore
         }
         return store;
     }
+
+    // Older versions skip these lines as comments.
+    private const string FlagPrefix = "#! ";
 
     private static string Clean(string s) => s.Replace('\t', ' ').Replace('\n', ' ').Replace('\r', ' ');
 }

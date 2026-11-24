@@ -178,7 +178,7 @@ internal static class StatsWindow
             GUILayout.FlexibleSpace();
             string empty = !string.IsNullOrEmpty(_search) ? $"Nothing matches \"{_search}\"."
                 : _tab == Tab.Built ? "Nothing built yet."
-                : _tab == Tab.Crafted ? "Nothing crafted yet. Crafts and upgrades count from when BuildStats was installed."
+                : _tab == Tab.Crafted ? "Nothing crafted yet."
                 : "No resources used yet.";
             GUILayout.Label(empty, Styles.Empty);
             GUILayout.FlexibleSpace();

@@ -4,7 +4,7 @@ Press **F7** in game for a table of what each player has built and the resources
 
 - **Things built**: every piece placed, per player (walls, floors, workbenches, ...)
 - **Resources used**: materials spent, per player. Filter by **Building**, **Crafting** or **All**.
-- **Crafted**: items crafted per player, grouped into weapons, armor, shields, ammo, tools, food & potions, utility & trinkets, plus upgrades. Counts crafts from when BuildStats is installed.
+- **Crafted**: items crafted per player, grouped into weapons, armor, shields, ammo, tools, food & potions, utility & trinkets, plus upgrades. Past crafts are counted once from crafted items that still exist (in chests, on item and armor stands, on the ground and in players' bags), credited to whoever crafted them. Food, potions, ammo and anything lost or broken can't be recovered.
 
 Each player gets a column, with a total on the right and a totals row at the bottom. Whoever has the most in a row is highlighted. Click a column header to sort by it (click again to flip), and type in the search box to filter rows. Drag the window by its title. F7 or Esc closes it.
 

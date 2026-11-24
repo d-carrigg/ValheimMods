@@ -25,6 +25,7 @@ internal static class StatsSync
     private const string RpcHello = "BuildStats_Hello";
     private const string RpcAdd = "BuildStats_Add";
     private const string RpcSync = "BuildStats_Sync";
+    private const string RpcScan = "BuildStats_Scan";
 
     // ZRoutedRpc.Everybody. It's a const in the game but a field in some reference copies of it,
     // and code built against the field fails to load in the real game, so use the value.
@@ -45,6 +46,7 @@ internal static class StatsSync
     private static float _lastHello;
     private static float _lastSend;
     private static bool _serverHasMod;
+    private static bool _inventorySent;
 
     // Private in the game, so called by reflection.
     private static readonly System.Reflection.MethodInfo GetServerPeerIdMethod = AccessTools.Method(typeof(ZRoutedRpc), "GetServerPeerID");
@@ -92,6 +94,7 @@ internal static class StatsSync
         rpc.Register<ZPackage>(RpcHello, (from, pkg) => Guard.Run("answering a player", () => OnHello(from, pkg)));
         rpc.Register<ZPackage>(RpcAdd, (from, pkg) => Guard.Run("adding stats from a player", () => OnAdd(from, pkg)));
         rpc.Register<ZPackage>(RpcSync, (from, pkg) => Guard.Run("reading stats from the server", () => OnSync(from, pkg)));
+        rpc.Register<ZPackage>(RpcScan, (from, pkg) => Guard.Run("adding a player's past crafts", () => OnScan(from, pkg)));
     }
 
     [HarmonyPatch(typeof(ZNet), "OnDestroy"), HarmonyPrefix]
@@ -108,6 +111,7 @@ internal static class StatsSync
         _fromServer = new StatsStore();
         _helloSentAt = -1f;
         _serverHasMod = false;
+        _inventorySent = false;
         _world = null;
         _worldPath = null;
         _changed = _unsaved = false;
@@ -125,6 +129,14 @@ internal static class StatsSync
         if (net.IsServer())
         {
             EnsureWorldLoaded();
+            if (_world != null && !_world.HasFlag(CraftBackfill.WorldFlag) && CraftBackfill.Ready)
+            {
+                // Once per world, even if it fails, so a broken scan doesn't repeat every frame.
+                _world.SetFlag(CraftBackfill.WorldFlag);
+                Guard.Run("counting past crafts in the world", () => CraftBackfill.ScanWorld(_world));
+                _changed = _unsaved = true;
+                SaveNow();
+            }
             if (_changed && now - _lastBroadcast >= BroadcastInterval)
             {
                 _changed = false;
@@ -154,6 +166,20 @@ internal static class StatsSync
             hello.Write(Player.m_localPlayer.GetPlayerID());
             hello.Write(Player.m_localPlayer.GetPlayerName());
             rpc.InvokeRoutedRPC(ServerPeerId(rpc), RpcHello, hello);
+        }
+
+        // Once per session; the server counts each player's bags only once per world.
+        if (_serverHasMod && !_inventorySent)
+        {
+            _inventorySent = true;
+            Guard.Run("counting past crafts in your inventory", () =>
+            {
+                var scan = new ZPackage();
+                scan.Write(Protocol);
+                scan.Write(me.GetPlayerID());
+                CraftBackfill.ScanInventory(me).Write(scan);
+                rpc.InvokeRoutedRPC(ServerPeerId(rpc), RpcScan, scan);
+            });
         }
 
         if (_serverHasMod && !Pending.IsEmpty && now - _lastSend >= SendInterval)
@@ -241,6 +267,18 @@ internal static class StatsSync
         if (ZNet.instance == null || !ZNet.instance.IsServer()) return;
         EnsureWorldLoaded();
         if (_world == null || pkg.ReadInt() != Protocol) return;
+        _world.AddAll(StatsStore.Read(pkg));
+        _changed = _unsaved = true;
+    }
+
+    private static void OnScan(long sender, ZPackage pkg)
+    {
+        if (ZNet.instance == null || !ZNet.instance.IsServer()) return;
+        EnsureWorldLoaded();
+        if (_world == null || pkg.ReadInt() != Protocol) return;
+        string flag = CraftBackfill.PlayerFlag(pkg.ReadLong());
+        if (_world.HasFlag(flag)) return; // already counted this player's bags in this world
+        _world.SetFlag(flag);
         _world.AddAll(StatsStore.Read(pkg));
         _changed = _unsaved = true;
     }

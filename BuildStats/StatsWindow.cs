@@ -213,7 +213,8 @@ internal static class StatsWindow
     private static void BuildRows()
     {
         StatsStore view = StatsSync.View;
-        _players = view.Players.ToArray();
+        // Players known only by id (builds from before BuildStats, not seen since) stay hidden until they join.
+        _players = view.Players.Where(p => !p.StartsWith(Backfill.IdPrefix)).ToArray();
         Category[] cats = _tab == Tab.Built ? new[] { Category.Built }
             : _filter == MaterialFilter.Building ? new[] { Category.BuildMaterials }
             : _filter == MaterialFilter.Crafting ? new[] { Category.CraftMaterials }

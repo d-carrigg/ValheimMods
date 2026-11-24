@@ -129,6 +129,8 @@ internal static class StatsSync
             _helloSentAt = now;
             var hello = new ZPackage();
             hello.Write(Protocol);
+            hello.Write(Player.m_localPlayer.GetPlayerID());
+            hello.Write(Player.m_localPlayer.GetPlayerName());
             rpc.InvokeRoutedRPC(ServerPeerId(rpc), RpcHello, hello);
         }
 
@@ -151,7 +153,10 @@ internal static class StatsSync
         string world = ZNet.instance.GetWorldName();
         if (string.IsNullOrEmpty(world)) return;
         foreach (char c in Path.GetInvalidFileNameChars()) world = world.Replace(c, '_');
-        _worldPath = Path.Combine(Path.Combine(Paths.ConfigPath, "BuildStats"), world + ".tsv");
+        string path = Path.Combine(Path.Combine(Paths.ConfigPath, "BuildStats"), world + ".tsv");
+        bool firstTime = !File.Exists(path);
+        if (firstTime && !Backfill.Ready) return; // try again next frame
+        _worldPath = path;
         try
         {
             _world = StatsStore.Load(_worldPath);
@@ -162,6 +167,13 @@ internal static class StatsSync
             _world = new StatsStore();
         }
         _lastSave = Time.realtimeSinceStartup;
+        if (firstTime)
+        {
+            // The file is written right away, so this runs once per world.
+            Backfill.Run(_world);
+            _changed = _unsaved = true;
+            SaveNow();
+        }
     }
 
     private static ZPackage Snapshot()
@@ -177,6 +189,11 @@ internal static class StatsSync
         if (ZNet.instance == null || !ZNet.instance.IsServer()) return;
         EnsureWorldLoaded();
         if (_world == null || pkg.ReadInt() != Protocol) return;
+        long playerId = pkg.ReadLong();
+        string name = pkg.ReadString();
+        // Builds from before BuildStats are stored by player id until that player shows up.
+        if (!string.IsNullOrEmpty(name) && _world.Rename(Backfill.IdPrefix + playerId, name))
+            _changed = _unsaved = true;
         ZRoutedRpc.instance.InvokeRoutedRPC(sender, RpcSync, Snapshot());
     }
 

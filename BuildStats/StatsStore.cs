@@ -48,6 +48,16 @@ internal sealed class StatsStore
                 foreach (var kv in p.Value[c]) Add(p.Key, (Category)c, kv.Key, kv.Value);
     }
 
+    /// <summary>Moves one player's counts onto another name. Returns false if there was nothing to move.</summary>
+    internal bool Rename(string from, string to)
+    {
+        if (from == to || !_players.TryGetValue(from, out var cats)) return false;
+        _players.Remove(from);
+        for (int c = 0; c < CategoryCount; c++)
+            foreach (var kv in cats[c]) Add(to, (Category)c, kv.Key, kv.Value);
+        return true;
+    }
+
     internal int Get(string player, Category category, string token) =>
         _players.TryGetValue(player, out var cats) && cats[(int)category].TryGetValue(token, out int n) ? n : 0;
 

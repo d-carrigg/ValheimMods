@@ -12,7 +12,8 @@ Each player gets a column, with a total on the right and a totals row at the bot
 Install BuildStats on the server as well as on each player's game. The server keeps the totals for every player, saves them, and sends the table to everyone who joins.
 
 - Totals are saved per world in `BepInEx/config/BuildStats/<world>.tsv` on the server (or on the host, for a hosted or single-player game).
-- Counting starts when the mod is installed. Earlier builds aren't known.
+- The first time it runs on a world, it counts every piece already built and the building materials those pieces cost. Each player's past builds appear once that player joins with BuildStats installed. Crafting is only counted from then on.
+- Works in single player and when you host from the game too: your game is the server.
 - If the server doesn't have BuildStats, the window still works but shows only your own builds from the current session.
 
 ## What counts

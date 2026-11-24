@@ -24,6 +24,10 @@ internal static class StatsSync
     private const string RpcAdd = "BuildStats_Add";
     private const string RpcSync = "BuildStats_Sync";
 
+    // ZRoutedRpc.Everybody. It's a const in the game but a field in some reference copies of it,
+    // and code built against the field fails to load in the real game, so use the value.
+    private const long Everybody = 0L;
+
     private const float SendInterval = 2f;
     private const float BroadcastInterval = 2f;
     private const float SaveInterval = 60f;
@@ -119,7 +123,7 @@ internal static class StatsSync
             {
                 _changed = false;
                 _lastBroadcast = now;
-                rpc.InvokeRoutedRPC(ZRoutedRpc.Everybody, RpcSync, Snapshot());
+                rpc.InvokeRoutedRPC(Everybody, RpcSync, Snapshot());
             }
             if (_unsaved && now - _lastSave >= SaveInterval) SaveNow();
         }

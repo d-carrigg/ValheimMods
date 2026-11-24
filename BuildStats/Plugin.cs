@@ -51,9 +51,20 @@ public class Plugin : BaseUnityPlugin
         Log.LogInfo($"{Name} {Version} loaded");
     }
 
+    private bool _syncFailed;
+
+    // Separate try blocks: if syncing breaks, the window still opens with what this game recorded.
     private void Update()
     {
-        StatsSync.Tick();
+        try
+        {
+            StatsSync.Tick();
+        }
+        catch (Exception e)
+        {
+            if (!_syncFailed) Log.LogError($"Stats sync failed: {e}");
+            _syncFailed = true;
+        }
         StatsWindow.Tick();
     }
 

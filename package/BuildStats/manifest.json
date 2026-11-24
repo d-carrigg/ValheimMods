@@ -1,0 +1,9 @@
+{
+  "name": "BuildStats",
+  "version_number": "1.0.0",
+  "website_url": "",
+  "description": "Press F7 for a table of what each player has built and the resources they used. Install on the server too to share it.",
+  "dependencies": [
+    "denikson-BepInExPack_Valheim-5.4.2360"
+  ]
+}

@@ -1,0 +1,150 @@
+# Builds BuildStats and produces the Thunderstore upload zip.
+#
+# Every run: download the "dcarrigg-BuildStats-<version>" artifact. It holds the zip
+# to upload to thunderstore.io as-is.
+# Publishing is manual: run this workflow from the Actions tab on main with
+# "publish" ticked. That publishes the manifest version_number to Thunderstore
+# (team dcarrigg, community valheim) with tcli, using the TCLI_AUTH_TOKEN repo
+# secret, and creates a GitHub release "BuildStats <version>" (tag buildstats-v<version>).
+# Pushes to main only build; they never publish.
+#
+# Game assemblies come from the Valheim dedicated server (free, anonymous
+# Steam download); BepInEx comes from the BepInExPack_Valheim version the
+# manifest depends on.
+name: BuildStats package
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish this version to Thunderstore and GitHub releases
+        type: boolean
+        default: false
+  pull_request:
+    paths: ['BuildStats/**', 'package/BuildStats/**', 'package/build-buildstats.ps1', '.github/workflows/buildstats-package.yml']
+  push:
+    branches: [main]
+    paths: ['BuildStats/**', 'package/BuildStats/**', 'package/build-buildstats.ps1', '.github/workflows/buildstats-package.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Download Valheim dedicated server assemblies
+        run: |
+          mkdir -p "$RUNNER_TEMP/steamcmd" && cd "$RUNNER_TEMP/steamcmd"
+          curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar xz
+          # steamcmd updates itself on first run and sometimes exits early; retry.
+          for i in 1 2 3; do
+            ./steamcmd.sh +force_install_dir "$RUNNER_TEMP/valheim" +login anonymous +app_update 896660 validate +quit && break
+            sleep 5
+          done
+          managed="$RUNNER_TEMP/valheim/valheim_server_Data/Managed"
+          test -f "$managed/assembly_valheim.dll"
+          echo "MANAGED_DIR=$managed" >> "$GITHUB_ENV"
+
+      - name: Download BepInExPack_Valheim
+        run: |
+          dep=$(jq -r '.dependencies[] | select(startswith("denikson-BepInExPack_Valheim-"))' package/BuildStats/manifest.json)
+          ver=${dep##*-}
+          curl -fsSL -o "$RUNNER_TEMP/bepinex.zip" "https://thunderstore.io/package/download/denikson/BepInExPack_Valheim/$ver/"
+          unzip -q "$RUNNER_TEMP/bepinex.zip" -d "$RUNNER_TEMP/bepinex"
+          core=$(dirname "$(find "$RUNNER_TEMP/bepinex" -path '*/BepInEx/core/BepInEx.dll' | head -1)")
+          test -f "$core/0Harmony.dll"
+          echo "BEPINEX_DIR=$(dirname "$core")" >> "$GITHUB_ENV"
+
+      - name: Build and zip
+        shell: pwsh
+        run: ./package/build-buildstats.ps1 -ManagedDir $env:MANAGED_DIR -BepInExDir $env:BEPINEX_DIR
+
+      - name: Check zip layout
+        id: zip
+        run: |
+          zip=$(ls dist/dcarrigg-BuildStats-*.zip)
+          unzip -Z1 "$zip" | sort > contents.txt
+          printf '%s\n' BuildStats.dll README.md icon.png manifest.json | diff - contents.txt
+          echo "path=$zip" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$zip" .zip)" >> "$GITHUB_OUTPUT"
+
+      # The artifact is the four files, so the downloaded artifact zip is
+      # itself the upload-ready package.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.zip.outputs.name }}
+          path: |
+            package/BuildStats/manifest.json
+            package/BuildStats/icon.png
+            package/BuildStats/README.md
+            package/BuildStats/BuildStats.dll
+          if-no-files-found: error
+
+      - name: Install tcli
+        run: dotnet tool install -g tcli --version 0.2.4
+
+      # Runs on PRs too: catches config mistakes and bad category slugs
+      # before anything is published.
+      - name: Check Thunderstore config
+        working-directory: package/BuildStats
+        run: |
+          tcli build --package-version "$(jq -r .version_number manifest.json)"
+          slugs=$(curl -fsSL https://thunderstore.io/api/experimental/community/valheim/category/ | jq -r '(.results // .)[].slug')
+          for c in $(sed -n '/^\[publish.categories\]/,/^\[/{s/^valheim *= *\[\(.*\)\]/\1/p}' thunderstore.toml | tr -d '" ' | tr ',' ' '); do
+            echo "$slugs" | grep -qx "$c" || { echo "Unknown Valheim category '$c'. Valid: $(echo $slugs)"; exit 1; }
+          done
+
+      # A version counts as new until its GitHub release exists, so re-runs
+      # and pushes that don't bump version_number publish nothing.
+      - name: Is this a new version?
+        id: ver
+        if: github.ref == 'refs/heads/main' && inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver=$(jq -r .version_number package/BuildStats/manifest.json)
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          if gh release view "buildstats-v$ver" >/dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "buildstats-v$ver already released; bump version_number to publish a new one."
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to Thunderstore
+        if: steps.ver.outputs.new == 'true'
+        working-directory: package/BuildStats
+        env:
+          TCLI_AUTH_TOKEN: ${{ secrets.TCLI_AUTH_TOKEN }}
+        run: |
+          ver=${{ steps.ver.outputs.version }}
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://thunderstore.io/api/experimental/package/dcarrigg/BuildStats/$ver/")
+          if [ "$code" = "200" ]; then
+            echo "BuildStats $ver is already on Thunderstore."
+          else
+            # --file can't be combined with --package-version, so set it in the config.
+            sed -i "s/^versionNumber = .*/versionNumber = \"$ver\"/" thunderstore.toml
+            tcli publish --file "$GITHUB_WORKSPACE/${{ steps.zip.outputs.path }}"
+          fi
+
+      - name: Publish release
+        if: steps.ver.outputs.new == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver=$(jq -r .version_number package/BuildStats/manifest.json)
+          tag="buildstats-v$ver"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; bump version_number to publish a new one."
+          else
+            gh release create "$tag" "${{ steps.zip.outputs.path }}" \
+              --target "$GITHUB_SHA" --title "BuildStats $ver" \
+              --notes "Thunderstore package for BuildStats $ver. Upload the attached zip as-is."
+          fi

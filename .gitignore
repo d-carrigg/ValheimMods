@@ -10,6 +10,7 @@ obj/
 package/**/*.dll
 package/**/README.md
 !package/CollectAll/README.md
+!package/BuildStats/README.md
 
 # Packaging output
 dist/

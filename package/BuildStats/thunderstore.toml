@@ -1,0 +1,32 @@
+# Thunderstore CLI (tcli) config. Used by CI to publish the zip that
+# package/build-collectall.ps1 builds. The version comes from manifest.json
+# (written in by CI before publishing), so only manifest.json needs bumping.
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "dcarrigg"
+name = "BuildStats"
+versionNumber = "0.0.0"
+description = "Press F7 for a table of what each player has built and the resources they used. Install on the server too to share it."
+websiteUrl = "https://github.com/d-carrigg/ValheimMods"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2360"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "../../dist/tcli"
+
+[[build.copy]]
+source = "./BuildStats.dll"
+target = "/"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["valheim"]
+
+[publish.categories]
+valheim = ["mods"]

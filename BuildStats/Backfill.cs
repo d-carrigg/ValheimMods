@@ -7,7 +7,7 @@ namespace BuildStats;
 /// <summary>
 /// One-time count of pieces that were already built before BuildStats was installed. Runs on the
 /// server the first time it sees a world (no stats file yet). Each piece remembers who placed it
-/// by player id; the id becomes a name the first time that player joins with BuildStats.
+/// by player id; <see cref="NameFinder"/> turns ids into names.
 /// </summary>
 internal static class Backfill
 {
@@ -20,17 +20,21 @@ internal static class Backfill
     /// <summary>True once the game objects needed for the scan exist.</summary>
     internal static bool Ready => ZDOMan.instance != null && ZNetScene.instance != null;
 
+    /// <summary>Every object saved in the world, or null if the game's layout changed.</summary>
+    internal static IEnumerable WorldObjects() => (ObjectsField?.GetValue(ZDOMan.instance) as IDictionary)?.Values;
+
     /// <summary>Adds every placed piece in the world, and the materials it cost, to <paramref name="store"/>.</summary>
     internal static void Run(StatsStore store)
     {
-        if (ObjectsField?.GetValue(ZDOMan.instance) is not IDictionary objects)
+        IEnumerable objects = WorldObjects();
+        if (objects == null)
         {
             Plugin.Log.LogWarning("Could not read the world's objects; skipping the count of existing builds.");
             return;
         }
 
         int pieces = 0;
-        foreach (object value in objects.Values)
+        foreach (object value in objects)
         {
             if (value is not ZDO zdo) continue;
             long creator = zdo.GetLong("creator");

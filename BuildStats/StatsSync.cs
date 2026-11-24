@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using HarmonyLib;
 using UnityEngine;
@@ -33,6 +35,7 @@ internal static class StatsSync
     private const float SaveInterval = 60f;
     private const float ServerAnswerTimeout = 15f;
     private const float HelloRetry = 5f;
+    private const float OnlineCheckInterval = 10f;
 
     // Client side
     private static readonly StatsStore Pending = new();
@@ -55,6 +58,7 @@ internal static class StatsSync
     private static bool _unsaved;
     private static float _lastBroadcast;
     private static float _lastSave;
+    private static float _lastOnlineCheck;
 
     /// <summary>The table the window shows.</summary>
     internal static StatsStore View => _serverHasMod ? _fromServer : Session;
@@ -128,6 +132,12 @@ internal static class StatsSync
                 rpc.InvokeRoutedRPC(Everybody, RpcSync, Snapshot());
             }
             if (_unsaved && now - _lastSave >= SaveInterval) SaveNow();
+            // Name builders from whoever is online, with or without BuildStats.
+            if (_world != null && now - _lastOnlineCheck >= OnlineCheckInterval)
+            {
+                _lastOnlineCheck = now;
+                Guard.Run("finding names of online players", () => NameUnknowns(NameFinder.FromOnlinePlayers()));
+            }
         }
 
         Player me = Player.m_localPlayer;
@@ -182,10 +192,27 @@ internal static class StatsSync
         if (firstTime)
         {
             // The file is written right away, so this runs once per world.
-            Backfill.Run(_world);
+            Guard.Run("counting existing builds", () => Backfill.Run(_world));
             _changed = _unsaved = true;
-            SaveNow();
         }
+        Guard.Run("finding names in the world", () => NameUnknowns(NameFinder.FromWorld()));
+        SaveNow();
+    }
+
+    /// <summary>Gives names to builders known only by id. Returns nothing; marks stats changed if any were named.</summary>
+    private static void NameUnknowns(Dictionary<long, string> names)
+    {
+        if (_world == null || names.Count == 0) return;
+        int named = 0;
+        foreach (string player in _world.Players.ToList())
+        {
+            if (!player.StartsWith(Backfill.IdPrefix)) continue;
+            if (!long.TryParse(player.Substring(Backfill.IdPrefix.Length), out long id)) continue;
+            if (names.TryGetValue(id, out string name) && _world.Rename(player, name)) named++;
+        }
+        if (named == 0) return;
+        _changed = _unsaved = true;
+        Plugin.Log.LogInfo($"Named {named} builder(s) from the world.");
     }
 
     private static ZPackage Snapshot()

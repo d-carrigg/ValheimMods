@@ -34,6 +34,7 @@ internal static class StatsWindow
     private static MaterialFilter? _nextFilter;
     private static Vector2 _scroll;
     private static Rect _rect;
+    private static bool _tooWide;
     private static float _scale = 1f;
 
     private static string[] _players = Array.Empty<string>();
@@ -110,7 +111,6 @@ internal static class StatsWindow
         _scale = Mathf.Max(1f, Screen.height / 1080f);
         GUI.matrix = Matrix4x4.Scale(new Vector3(_scale, _scale, 1f));
         float screenW = Screen.width / _scale, screenH = Screen.height / _scale;
-        if (_rect.x <= 0f && _rect.y <= 0f) _rect.position = new Vector2((screenW - _rect.width) / 2f, (screenH - _rect.height) / 2f);
 
         if (Event.current.type == EventType.Layout)
         {
@@ -119,7 +119,9 @@ internal static class StatsWindow
             _nextTab = null;
             _nextFilter = null;
             BuildRows();
+            FitWidth(screenW);
         }
+        if (_rect.x <= 0f && _rect.y <= 0f) _rect.position = new Vector2((screenW - _rect.width) / 2f, (screenH - _rect.height) / 2f);
         _rect = GUI.Window(WindowId, _rect, DrawWindow, GUIContent.none, Styles.Window);
         _rect.x = Mathf.Clamp(_rect.x, 0f, screenW - _rect.width);
         _rect.y = Mathf.Clamp(_rect.y, 0f, screenH - _rect.height);
@@ -154,15 +156,19 @@ internal static class StatsWindow
         }
         else
         {
-            DrawRow(_tab == Tab.Built ? "Piece" : "Material", _players, null, "Total", Styles.Header, Styles.HeaderNum);
-            _scroll = GUILayout.BeginScrollView(_scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
+            // Too many players to fit across the screen: header and totals scroll sideways with the rows.
+            string first = _tab == Tab.Built ? "Piece" : "Material";
+            if (_tooWide) _scroll = GUILayout.BeginScrollView(_scroll, true, false, GUI.skin.horizontalScrollbar, GUI.skin.verticalScrollbar);
+            DrawRow(first, _players, null, "Total", Styles.Header, Styles.HeaderNum);
+            if (!_tooWide) _scroll = GUILayout.BeginScrollView(_scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
             for (int i = 0; i < _rows.Count; i++)
             {
                 Row r = _rows[i];
                 DrawRow(r.Name, null, r.PerPlayer, r.Total.ToString("N0"), i % 2 == 0 ? Styles.Cell : Styles.CellAlt, i % 2 == 0 ? Styles.Num : Styles.NumAlt);
             }
-            GUILayout.EndScrollView();
+            if (!_tooWide) GUILayout.EndScrollView();
             DrawRow("All", null, _totals.PerPlayer, _totals.Total.ToString("N0"), Styles.TotalCell, Styles.TotalNum);
+            if (_tooWide) GUILayout.EndScrollView();
         }
 
         GUILayout.Space(4f);
@@ -173,6 +179,16 @@ internal static class StatsWindow
         GUILayout.EndHorizontal();
 
         GUI.DragWindow(new Rect(0f, 0f, 10000f, 40f));
+    }
+
+    // Widens the window to fit every player column, up to the screen width.
+    private static void FitWidth(float screenW)
+    {
+        int columns = _players.Length + (_players.Length > 1 ? 1 : 0);
+        float needed = 32f + ItemWidth + 2f + columns * (NumberWidth + 2f) + 24f;
+        float max = Mathf.Max(560f, screenW - 40f);
+        _tooWide = needed > max;
+        _rect.width = Mathf.Clamp(needed, 560f, max);
     }
 
     private static void DrawRow(string name, string[] heads, int[] values, string total, GUIStyle cell, GUIStyle num)

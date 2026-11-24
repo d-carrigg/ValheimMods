@@ -2,11 +2,10 @@
 #
 # Every run: download the "dcarrigg-BuildStats-<version>" artifact. It holds the zip
 # to upload to thunderstore.io as-is.
-# Publishing is manual: run this workflow from the Actions tab on main with
-# "publish" ticked. That publishes the manifest version_number to Thunderstore
-# (team dcarrigg, community valheim) with tcli, using the TCLI_AUTH_TOKEN repo
-# secret, and creates a GitHub release "BuildStats <version>" (tag buildstats-v<version>).
-# Pushes to main only build; they never publish.
+# Every push to main with a new manifest version_number publishes a GitHub
+# release "BuildStats <version>" (tag buildstats-v<version>) with the zip,
+# and publishes that version to Thunderstore (team dcarrigg, community valheim)
+# with tcli, using the TCLI_AUTH_TOKEN repo secret.
 #
 # Game assemblies come from the Valheim dedicated server (free, anonymous
 # Steam download); BepInEx comes from the BepInExPack_Valheim version the
@@ -15,15 +14,11 @@ name: BuildStats package
 
 on:
   workflow_dispatch:
-    inputs:
-      publish:
-        description: Publish this version to Thunderstore and GitHub releases
-        type: boolean
-        default: false
   pull_request:
     paths: ['BuildStats/**', 'package/BuildStats/**', 'package/build-buildstats.ps1', '.github/workflows/buildstats-package.yml']
   push:
     branches: [main]
+    tags: ['buildstats-v*']
     paths: ['BuildStats/**', 'package/BuildStats/**', 'package/build-buildstats.ps1', '.github/workflows/buildstats-package.yml']
 
 permissions:
@@ -105,7 +100,7 @@ jobs:
       # and pushes that don't bump version_number publish nothing.
       - name: Is this a new version?
         id: ver
-        if: github.ref == 'refs/heads/main' && inputs.publish
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -135,14 +130,18 @@ jobs:
           fi
 
       - name: Publish release
-        if: steps.ver.outputs.new == 'true'
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/buildstats-v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           ver=$(jq -r .version_number package/BuildStats/manifest.json)
           tag="buildstats-v$ver"
           if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Release $tag already exists; bump version_number to publish a new one."
+            if [ "$GITHUB_REF" = "refs/tags/$tag" ]; then
+              gh release upload "$tag" "${{ steps.zip.outputs.path }}" --clobber
+            else
+              echo "Release $tag already exists; bump version_number to publish a new one."
+            fi
           else
             gh release create "$tag" "${{ steps.zip.outputs.path }}" \
               --target "$GITHUB_SHA" --title "BuildStats $ver" \

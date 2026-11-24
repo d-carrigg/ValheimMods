@@ -35,6 +35,8 @@ dotnet SignSorter.Tests/bin/Release/SignSorter.Tests.dll
 
 ## Packaging BuildStats
 
-- `.github/workflows/buildstats-package.yml` builds it on every PR and push to `main` that touches it; the `dcarrigg-BuildStats-<version>` artifact is the upload zip.
-- Publishing is manual: run the workflow on `main` from the Actions tab with **publish** ticked. It publishes `version_number` from `package/BuildStats/manifest.json` to Thunderstore and creates a `buildstats-v<version>` release.
-- Locally: `pwsh package/build-buildstats.ps1`. Keep `version_number` and `Version` in `BuildStats/Plugin.cs` in step.
+Same setup as CollectAll, with its own workflow (`.github/workflows/buildstats-package.yml`), package folder (`package/BuildStats/`) and release tags (`buildstats-v<version>`).
+
+- Each workflow only runs for its own mod's files, so changing one mod never rebuilds or publishes the other.
+- A push to `main` with a new `version_number` in `package/BuildStats/manifest.json` publishes it to Thunderstore. Keep `Version` in `BuildStats/Plugin.cs` in step.
+- Locally: `pwsh package/build-buildstats.ps1`.

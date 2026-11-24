@@ -15,11 +15,11 @@ name: CollectAll package
 on:
   workflow_dispatch:
   pull_request:
-    paths: ['CollectAll/**', 'Shared/**', 'package/**', '.github/workflows/collectall-package.yml']
+    paths: ['CollectAll/**', 'Shared/**', 'package/CollectAll/**', 'package/build-collectall.ps1', '.github/workflows/collectall-package.yml']
   push:
     branches: [main]
     tags: ['collectall-v*']
-    paths: ['CollectAll/**', 'Shared/**', 'package/**', '.github/workflows/collectall-package.yml']
+    paths: ['CollectAll/**', 'Shared/**', 'package/CollectAll/**', 'package/build-collectall.ps1', '.github/workflows/collectall-package.yml']
 
 permissions:
   contents: write

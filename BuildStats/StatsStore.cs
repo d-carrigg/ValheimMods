@@ -14,12 +14,14 @@ internal enum Category
     BuildMaterials = 1,
     /// <summary>Materials spent crafting and upgrading items, keyed by item name token.</summary>
     CraftMaterials = 2,
+    /// <summary>Items crafted and upgraded, keyed by group ("Weapons", "Armor", ..., "Upgrades").</summary>
+    Crafted = 3,
 }
 
 /// <summary>Per-player counts, keyed by player name, then category, then name token (e.g. "$item_wood").</summary>
 internal sealed class StatsStore
 {
-    internal const int CategoryCount = 3;
+    internal const int CategoryCount = 4;
 
     private readonly Dictionary<string, Dictionary<string, int>[]> _players = new(StringComparer.Ordinal);
 
@@ -115,7 +117,7 @@ internal sealed class StatsStore
         string tmp = path + ".tmp";
         using (var w = new StreamWriter(tmp))
         {
-            w.WriteLine("# BuildStats: player, category (Built, BuildMaterials, CraftMaterials), name, count");
+            w.WriteLine("# BuildStats: player, category (Built, BuildMaterials, CraftMaterials, Crafted), name, count");
             foreach (var p in _players)
                 for (int c = 0; c < CategoryCount; c++)
                     foreach (var kv in p.Value[c])

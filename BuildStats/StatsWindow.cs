@@ -13,7 +13,7 @@ namespace BuildStats;
 [HarmonyPatch]
 internal static class StatsWindow
 {
-    private enum Tab { Built, Materials }
+    private enum Tab { Built, Materials, Crafted }
     private enum MaterialFilter { All, Building, Crafting }
 
     private sealed class Row
@@ -156,6 +156,7 @@ internal static class StatsWindow
         GUILayout.BeginHorizontal();
         TabButton("Things built", Tab.Built);
         TabButton("Resources used", Tab.Materials);
+        TabButton("Crafted", Tab.Crafted);
         GUILayout.FlexibleSpace();
         if (_tab == Tab.Materials)
         {
@@ -176,14 +177,16 @@ internal static class StatsWindow
         {
             GUILayout.FlexibleSpace();
             string empty = !string.IsNullOrEmpty(_search) ? $"Nothing matches \"{_search}\"."
-                : _tab == Tab.Built ? "Nothing built yet." : "No resources used yet.";
+                : _tab == Tab.Built ? "Nothing built yet."
+                : _tab == Tab.Crafted ? "Nothing crafted yet. Crafts and upgrades count from when BuildStats was installed."
+                : "No resources used yet.";
             GUILayout.Label(empty, Styles.Empty);
             GUILayout.FlexibleSpace();
         }
         else
         {
             // Too many players to fit across the screen: header and totals scroll sideways with the rows.
-            string first = _tab == Tab.Built ? "Piece" : "Material";
+            string first = _tab == Tab.Built ? "Piece" : _tab == Tab.Crafted ? "Kind" : "Material";
             if (_tooWide) _scroll = GUILayout.BeginScrollView(_scroll, true, false, GUI.skin.horizontalScrollbar, GUI.skin.verticalScrollbar);
             DrawRow(first, _labels, null, "Total", Styles.Header, Styles.HeaderNum);
             if (!_tooWide) _scroll = GUILayout.BeginScrollView(_scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
@@ -298,6 +301,7 @@ internal static class StatsWindow
         _players = named.Concat(unknown).ToArray();
         _labels = named.Concat(unknown.Select((_, i) => $"Unknown {i + 1}")).ToArray();
         Category[] cats = _tab == Tab.Built ? new[] { Category.Built }
+            : _tab == Tab.Crafted ? new[] { Category.Crafted }
             : _filter == MaterialFilter.Building ? new[] { Category.BuildMaterials }
             : _filter == MaterialFilter.Crafting ? new[] { Category.CraftMaterials }
             : new[] { Category.BuildMaterials, Category.CraftMaterials };

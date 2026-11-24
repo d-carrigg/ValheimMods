@@ -21,7 +21,7 @@ namespace BuildStats;
 [HarmonyPatch]
 internal static class StatsSync
 {
-    private const int Protocol = 1;
+    private const int Protocol = 2; // 2: added Category.Crafted
     private const string RpcHello = "BuildStats_Hello";
     private const string RpcAdd = "BuildStats_Add";
     private const string RpcSync = "BuildStats_Sync";

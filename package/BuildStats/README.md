@@ -4,12 +4,13 @@ Press **F7** in game for a table of what each player has built and the resources
 
 - **Things built**: every piece placed, per player (walls, floors, workbenches, ...)
 - **Resources used**: materials spent, per player. Filter by **Building**, **Crafting** or **All**.
+- **Crafted**: items crafted per player, grouped into weapons, armor, shields, ammo, tools, food & potions, utility & trinkets, plus upgrades. Counts crafts from when BuildStats is installed.
 
 Each player gets a column, with a total on the right and a totals row at the bottom. Whoever has the most in a row is highlighted. Click a column header to sort by it (click again to flip), and type in the search box to filter rows. Drag the window by its title. F7 or Esc closes it.
 
 ## Multiplayer and dedicated servers
 
-Install BuildStats on the server as well as on each player's game. The server keeps the totals for every player, saves them, and sends the table to everyone who joins.
+Install BuildStats on the server as well as on each player's game. The server keeps the totals for every player, saves them, and sends the table to everyone who joins. The server and players should run the same BuildStats version; if they don't match, players see only their own stats from the current session.
 
 - Totals are saved per world in `BepInEx/config/BuildStats/<world>.tsv` on the server (or on the host, for a hosted or single-player game).
 - The first time it runs on a world, it counts every piece already built and the building materials those pieces cost. Names come from beds, wards and tombstones in the world, and from anyone who joins the server (with or without BuildStats). Builders it still can't name show as Unknown 1, Unknown 2, ... Crafting is only counted from then on.

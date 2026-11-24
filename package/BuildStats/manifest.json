@@ -1,6 +1,6 @@
 {
   "name": "BuildStats",
-  "version_number": "1.0.1",
+  "version_number": "1.1.0",
   "website_url": "",
   "description": "Press F7 for a table of what each player has built and the resources they used. Install on the server too to share it.",
   "dependencies": [

@@ -5,7 +5,7 @@ Press **F7** in game for a table of what each player has built and the resources
 - **Things built**: every piece placed, per player (walls, floors, workbenches, ...)
 - **Resources used**: materials spent, per player. Filter by **Building**, **Crafting** or **All**.
 
-Each player gets a column, with a total on the right and a totals row at the bottom. Drag the window by its title. F7 or Esc closes it.
+Each player gets a column, with a total on the right and a totals row at the bottom. Whoever has the most in a row is highlighted. Click a column header to sort by it (click again to flip), and type in the search box to filter rows. Drag the window by its title. F7 or Esc closes it.
 
 ## Multiplayer and dedicated servers
 

@@ -31,6 +31,13 @@ internal static class StatsWindow
     private static Tab _tab;
     private static MaterialFilter _filter;
     private static Tab? _nextTab;
+    // Sorting: SortTotal, SortName or a player's key; clicking a header sets _nextSort.
+    private const string SortTotal = "#total", SortName = "#name", SearchControl = "BuildStatsSearch";
+    private static string _sortBy = SortTotal;
+    private static bool _sortDescending = true;
+    private static string _nextSort;
+    private static string _search = "";
+    private static bool _searchFocused;
     private static MaterialFilter? _nextFilter;
     private static Vector2 _scroll;
     private static Rect _rect;
@@ -45,12 +52,15 @@ internal static class StatsWindow
 
     internal static bool IsOpen => _open;
 
+    internal static bool SearchFocused => _searchFocused;
+
     // ------------------------------------------------------------------ open / close
 
     internal static void Tick()
     {
         if (_open && Player.m_localPlayer == null) _open = false;
-        if (!Input.GetKeyDown(Plugin.ToggleKey.Value)) return;
+        if (!_open) _searchFocused = false;
+        if (_searchFocused || !Input.GetKeyDown(Plugin.ToggleKey.Value)) return; // typing: only Esc closes
         if (_open) _open = false;
         else if (CanOpen()) Open();
     }
@@ -117,6 +127,13 @@ internal static class StatsWindow
         {
             if (_nextTab is Tab t && t != _tab) { _tab = t; _scroll = Vector2.zero; }
             if (_nextFilter is MaterialFilter f) _filter = f;
+            if (_nextSort != null)
+            {
+                // Same column again flips the order; a new column starts at the most (names: A to Z).
+                if (_nextSort == _sortBy) _sortDescending = !_sortDescending;
+                else { _sortBy = _nextSort; _sortDescending = _sortBy != SortName; }
+                _nextSort = null;
+            }
             _nextTab = null;
             _nextFilter = null;
             BuildRows();
@@ -146,13 +163,21 @@ internal static class StatsWindow
             FilterButton("Building", MaterialFilter.Building);
             FilterButton("Crafting", MaterialFilter.Crafting);
         }
+        GUILayout.Space(10f);
+        GUI.SetNextControlName(SearchControl);
+        _search = GUILayout.TextField(_search ?? "", 40, Styles.Search, GUILayout.Width(190f));
+        if (string.IsNullOrEmpty(_search) && GUI.GetNameOfFocusedControl() != SearchControl)
+            GUI.Label(GUILayoutUtility.GetLastRect(), "Search...", Styles.SearchHint);
+        if (Event.current.type == EventType.Repaint) _searchFocused = GUI.GetNameOfFocusedControl() == SearchControl;
         GUILayout.EndHorizontal();
         GUILayout.Space(6f);
 
         if (_rows.Count == 0)
         {
             GUILayout.FlexibleSpace();
-            GUILayout.Label(_tab == Tab.Built ? "Nothing built yet." : "No resources used yet.", Styles.Empty);
+            string empty = !string.IsNullOrEmpty(_search) ? $"Nothing matches \"{_search}\"."
+                : _tab == Tab.Built ? "Nothing built yet." : "No resources used yet.";
+            GUILayout.Label(empty, Styles.Empty);
             GUILayout.FlexibleSpace();
         }
         else
@@ -165,10 +190,10 @@ internal static class StatsWindow
             for (int i = 0; i < _rows.Count; i++)
             {
                 Row r = _rows[i];
-                DrawRow(r.Name, null, r.PerPlayer, r.Total.ToString("N0"), i % 2 == 0 ? Styles.Cell : Styles.CellAlt, i % 2 == 0 ? Styles.Num : Styles.NumAlt);
+                DrawRow(r.Name, null, r.PerPlayer, r.Total.ToString("N0"), i % 2 == 0 ? Styles.Cell : Styles.CellAlt, i % 2 == 0 ? Styles.Num : Styles.NumAlt, i % 2 == 0 ? Styles.Top : Styles.TopAlt);
             }
             if (!_tooWide) GUILayout.EndScrollView();
-            DrawRow("All", null, _totals.PerPlayer, _totals.Total.ToString("N0"), Styles.TotalCell, Styles.TotalNum);
+            DrawRow("All", null, _totals.PerPlayer, _totals.Total.ToString("N0"), Styles.TotalCell, Styles.TotalNum, Styles.TotalTop);
             if (_tooWide) GUILayout.EndScrollView();
         }
 
@@ -192,20 +217,56 @@ internal static class StatsWindow
         _rect.width = Mathf.Clamp(needed, 560f, max);
     }
 
-    private static void DrawRow(string name, string[] heads, int[] values, string total, GUIStyle cell, GUIStyle num)
+    private static void DrawRow(string name, string[] heads, int[] values, string total, GUIStyle cell, GUIStyle num, GUIStyle top = null)
     {
-        GUILayout.BeginHorizontal();
-        GUILayout.Label(name, cell, GUILayout.Width(ItemWidth));
         int n = _players.Length;
-        for (int i = 0; i < n; i++)
+        // Header: long names wrap onto more lines; every cell in the row gets the tallest height.
+        GUILayoutOption height = null;
+        if (heads != null)
         {
-            string text = heads != null ? heads[i] : values[i] == 0 ? "-" : values[i].ToString("N0");
-            GUILayout.Label(text, num, GUILayout.Width(NumberWidth));
+            float h = cell.CalcHeight(new GUIContent(name), ItemWidth);
+            for (int i = 0; i < n; i++) h = Mathf.Max(h, num.CalcHeight(new GUIContent(heads[i]), NumberWidth));
+            height = GUILayout.Height(h);
         }
-        if (n > 1) GUILayout.Label(total, num, GUILayout.Width(NumberWidth));
-        GUILayout.Label(GUIContent.none, cell, GUILayout.ExpandWidth(true));
+        // Highlight whoever has the most in this row (all of them on a tie).
+        int best = 0;
+        if (values != null && top != null && n > 1)
+            for (int i = 0; i < n; i++) best = Mathf.Max(best, values[i]);
+
+        GUILayout.BeginHorizontal();
+        if (heads != null)
+        {
+            // Header cells are buttons: click to sort by that column, again to flip.
+            HeaderButton(name, SortName, cell, Options(ItemWidth, height));
+            for (int i = 0; i < n; i++) HeaderButton(heads[i], _players[i], num, Options(NumberWidth, height));
+            if (n > 1) HeaderButton(total, SortTotal, num, Options(NumberWidth, height));
+        }
+        else
+        {
+            GUILayout.Label(name, cell, Options(ItemWidth, height));
+            for (int i = 0; i < n; i++)
+            {
+                string text = values[i] == 0 ? "-" : values[i].ToString("N0");
+                GUIStyle style = best > 0 && values[i] == best ? top : num;
+                GUILayout.Label(text, style, Options(NumberWidth, height));
+            }
+            if (n > 1) GUILayout.Label(total, num, Options(NumberWidth, height));
+        }
+        GUILayout.Label(GUIContent.none, cell, height == null ? new[] { GUILayout.ExpandWidth(true) } : new[] { GUILayout.ExpandWidth(true), height });
         GUILayout.EndHorizontal();
     }
+
+    private static void HeaderButton(string text, string sortKey, GUIStyle style, GUILayoutOption[] options)
+    {
+        bool sorted = _sortBy == sortKey;
+        if (sorted) text = (style.alignment == TextAnchor.MiddleLeft || style.alignment == TextAnchor.UpperLeft)
+            ? text + (_sortDescending ? " \u25BC" : " \u25B2")
+            : (_sortDescending ? "\u25BC " : "\u25B2 ") + text;
+        if (GUILayout.Button(text, sorted ? (style == Styles.Header ? Styles.HeaderOn : Styles.HeaderNumOn) : style, options)) _nextSort = sortKey;
+    }
+
+    private static GUILayoutOption[] Options(float width, GUILayoutOption height) =>
+        height == null ? new[] { GUILayout.Width(width) } : new[] { GUILayout.Width(width), height };
 
     // Clicks are applied on the next layout pass, so one frame's layout and repaint draw the same controls.
     private static void TabButton(string text, Tab tab)
@@ -250,12 +311,29 @@ internal static class StatsWindow
             {
                 foreach (Category c in cats) row.PerPlayer[p] += view.Get(_players[p], c, token);
                 row.Total += row.PerPlayer[p];
-                _totals.PerPlayer[p] += row.PerPlayer[p];
             }
-            _totals.Total += row.Total;
             if (row.Total > 0) rows.Add(row);
         }
-        rows.Sort((a, b) => a.Total != b.Total ? b.Total.CompareTo(a.Total) : string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase));
+
+        // Search narrows the rows; the totals row adds up what's shown.
+        if (!string.IsNullOrEmpty(_search))
+            rows = rows.Where(r => r.Name.IndexOf(_search, StringComparison.CurrentCultureIgnoreCase) >= 0).ToList();
+        foreach (Row r in rows)
+        {
+            for (int p = 0; p < _players.Length; p++) _totals.PerPlayer[p] += r.PerPlayer[p];
+            _totals.Total += r.Total;
+        }
+
+        int col = Array.IndexOf(_players, _sortBy);
+        if (_sortBy != SortTotal && _sortBy != SortName && col < 0) _sortBy = SortTotal; // that player is gone
+        int sign = _sortDescending ? -1 : 1;
+        rows.Sort((a, b) =>
+        {
+            int c = _sortBy == SortName ? 0 : (col >= 0 ? a.PerPlayer[col].CompareTo(b.PerPlayer[col]) : a.Total.CompareTo(b.Total)) * sign;
+            if (c == 0 && _sortBy == SortName) c = string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase) * sign;
+            if (c == 0 && col >= 0) c = b.Total.CompareTo(a.Total);
+            return c != 0 ? c : string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase);
+        });
         _rows = rows;
     }
 
@@ -274,10 +352,11 @@ internal static class StatsWindow
     {
         private static readonly Color Gold = new(1f, 0.74f, 0.36f);
         private static readonly Color Text = new(0.93f, 0.90f, 0.84f);
+        private static readonly Color Hot = new(1f, 0.62f, 0.2f);
         private static readonly Color Dim = new(0.66f, 0.62f, 0.55f);
 
-        internal static GUIStyle Window, Title, Close, Tab, TabOn, Filter, FilterOn, Header, HeaderNum;
-        internal static GUIStyle Cell, CellAlt, Num, NumAlt, TotalCell, TotalNum, Footer, Empty;
+        internal static GUIStyle Window, Title, Close, Tab, TabOn, Filter, FilterOn, Header, HeaderNum, HeaderOn, HeaderNumOn, Search, SearchHint;
+        internal static GUIStyle Cell, CellAlt, Num, NumAlt, Top, TopAlt, TotalCell, TotalNum, TotalTop, Footer, Empty;
         private static bool _made;
 
         internal static void Ensure()
@@ -306,12 +385,31 @@ internal static class StatsWindow
             FilterOn = Make(font, 13, Gold, FontStyle.Bold, TextAnchor.MiddleCenter, null, new RectOffset(8, 8, 6, 6));
             Header = Make(font, 14, Gold, FontStyle.Bold, TextAnchor.MiddleLeft, head, new RectOffset(8, 8, 6, 6));
             HeaderNum = Make(font, 14, Gold, FontStyle.Bold, TextAnchor.MiddleRight, head, new RectOffset(8, 8, 6, 6));
+            HeaderNum.wordWrap = true;
+            Header.wordWrap = true;
+            Texture2D headOn = Solid(new Color(1f, 0.74f, 0.36f, 0.20f));
+            HeaderOn = new GUIStyle(Header) { normal = { background = headOn, textColor = Gold }, hover = { background = headOn, textColor = Gold } };
+            HeaderNumOn = new GUIStyle(HeaderNum) { normal = { background = headOn, textColor = Gold }, hover = { background = headOn, textColor = Gold } };
+            Header.hover.textColor = Text;
+            HeaderNum.hover.textColor = Text;
+            Texture2D field = Solid(new Color(0f, 0f, 0f, 0.45f));
+            Search = Make(font, 14, Text, FontStyle.Normal, TextAnchor.MiddleLeft, field, new RectOffset(8, 8, 5, 5));
+            Search.focused.background = field;
+            Search.focused.textColor = Text;
+            Search.clipping = TextClipping.Clip;
+            SearchHint = Make(font, 14, Dim, FontStyle.Italic, TextAnchor.MiddleLeft, null, new RectOffset(8, 8, 5, 5));
             Cell = Make(font, 14, Text, FontStyle.Normal, TextAnchor.MiddleLeft, null, new RectOffset(8, 8, 4, 4));
             CellAlt = Make(font, 14, Text, FontStyle.Normal, TextAnchor.MiddleLeft, band, new RectOffset(8, 8, 4, 4));
             Num = Make(font, 14, Text, FontStyle.Normal, TextAnchor.MiddleRight, null, new RectOffset(8, 8, 4, 4));
             NumAlt = Make(font, 14, Text, FontStyle.Normal, TextAnchor.MiddleRight, band, new RectOffset(8, 8, 4, 4));
             TotalCell = Make(font, 14, Gold, FontStyle.Bold, TextAnchor.MiddleLeft, total, new RectOffset(8, 8, 5, 5));
             TotalNum = Make(font, 14, Gold, FontStyle.Bold, TextAnchor.MiddleRight, total, new RectOffset(8, 8, 5, 5));
+            // Most in a row: bright orange, bold, on an orange tint.
+            Texture2D topBg = Solid(new Color(1f, 0.55f, 0.1f, 0.28f));
+            Texture2D totalTopBg = Solid(new Color(1f, 0.55f, 0.1f, 0.40f));
+            Top = Make(font, 14, Hot, FontStyle.Bold, TextAnchor.MiddleRight, topBg, new RectOffset(8, 8, 4, 4));
+            TopAlt = Top;
+            TotalTop = Make(font, 14, Hot, FontStyle.Bold, TextAnchor.MiddleRight, totalTopBg, new RectOffset(8, 8, 5, 5));
             Footer = Make(font, 12, Dim, FontStyle.Normal);
             Empty = Make(font, 15, Dim, FontStyle.Italic, TextAnchor.MiddleCenter);
         }
@@ -346,4 +444,36 @@ internal static class StatsWindow
             return t;
         }
     }
+}
+
+/// <summary>Kept apart from <see cref="StatsWindow"/> so a game update that renames the camera code only loses this.</summary>
+[HarmonyPatch]
+internal static class ZoomLock
+{
+    // The mouse wheel scrolls the table, so keep it from zooming the camera while the window is open.
+    private static readonly AccessTools.FieldRef<GameCamera, float> CameraDistance = AccessTools.FieldRefAccess<GameCamera, float>("m_distance");
+
+    [HarmonyPatch(typeof(GameCamera), "UpdateCamera"), HarmonyPrefix]
+    private static void RememberZoom(GameCamera __instance, out float __state) => __state = CameraDistance(__instance);
+
+    [HarmonyPatch(typeof(GameCamera), "UpdateCamera"), HarmonyPostfix]
+    private static void KeepZoom(GameCamera __instance, float __state)
+    {
+        if (StatsWindow.IsOpen) CameraDistance(__instance) = __state;
+    }
+}
+
+/// <summary>Stops game hotkeys from firing while typing in the search box.</summary>
+[HarmonyPatch]
+internal static class TypingLock
+{
+    // While typing in the search box, letters mustn't open the inventory, map or chat.
+    [HarmonyPatch(typeof(InventoryGui), "Update"), HarmonyPrefix]
+    private static bool NoInventoryKeysWhileSearching() => !(StatsWindow.IsOpen && StatsWindow.SearchFocused);
+
+    [HarmonyPatch(typeof(Minimap), "Update"), HarmonyPrefix]
+    private static bool NoMapKeysWhileSearching() => !(StatsWindow.IsOpen && StatsWindow.SearchFocused);
+
+    [HarmonyPatch(typeof(Chat), "Update"), HarmonyPrefix]
+    private static bool NoChatKeysWhileSearching() => !(StatsWindow.IsOpen && StatsWindow.SearchFocused);
 }

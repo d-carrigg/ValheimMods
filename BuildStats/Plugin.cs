@@ -65,10 +65,10 @@ public class Plugin : BaseUnityPlugin
             if (!_syncFailed) Log.LogError($"Stats sync failed: {e}");
             _syncFailed = true;
         }
-        StatsWindow.Tick();
+        Guard.Run("the stats window hotkey", StatsWindow.Tick);
     }
 
-    private void OnGUI() => StatsWindow.Draw();
+    private void OnGUI() => Guard.Run("drawing the stats window", StatsWindow.Draw);
 
     private void OnApplicationQuit() => StatsSync.SaveNow();
 

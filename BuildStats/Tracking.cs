@@ -7,7 +7,9 @@ namespace BuildStats;
 internal static class Tracking
 {
     [HarmonyPatch(typeof(Player), "PlacePiece"), HarmonyPostfix]
-    private static void OnPlacePiece(Player __instance, object[] __args)
+    private static void OnPlacePiece(Player __instance, object[] __args) => Guard.Run("counting a placed piece", () => CountPiece(__instance, __args));
+
+    private static void CountPiece(Player __instance, object[] __args)
     {
         // Arguments by position, so a renamed parameter in a game update doesn't break the hook.
         if (__instance != Player.m_localPlayer || __args.Length == 0 || __args[0] is not Piece piece) return;
@@ -17,7 +19,9 @@ internal static class Tracking
     }
 
     [HarmonyPatch(typeof(Player), "ConsumeResources"), HarmonyPrefix]
-    private static void OnConsumeResources(Player __instance, object[] __args)
+    private static void OnConsumeResources(Player __instance, object[] __args) => Guard.Run("counting used resources", () => CountResources(__instance, __args));
+
+    private static void CountResources(Player __instance, object[] __args)
     {
         if (__instance != Player.m_localPlayer || __instance.NoCostCheat()) return;
         if (__args.Length < 2 || __args[0] is not Piece.Requirement[] requirements || __args[1] is not int qualityLevel) return;

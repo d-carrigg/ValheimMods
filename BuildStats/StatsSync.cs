@@ -78,22 +78,24 @@ internal static class StatsSync
     // ------------------------------------------------------------------ setup
 
     [HarmonyPatch(typeof(ZNet), "Awake"), HarmonyPostfix]
-    private static void RegisterRpcs()
+    private static void RegisterRpcs() => Guard.Run("setting up stats sync", Register);
+
+    private static void Register()
     {
         ResetSession();
         ZRoutedRpc rpc = ZRoutedRpc.instance;
         if (rpc == null) return;
-        rpc.Register<ZPackage>(RpcHello, OnHello);
-        rpc.Register<ZPackage>(RpcAdd, OnAdd);
-        rpc.Register<ZPackage>(RpcSync, OnSync);
+        rpc.Register<ZPackage>(RpcHello, (from, pkg) => Guard.Run("answering a player", () => OnHello(from, pkg)));
+        rpc.Register<ZPackage>(RpcAdd, (from, pkg) => Guard.Run("adding stats from a player", () => OnAdd(from, pkg)));
+        rpc.Register<ZPackage>(RpcSync, (from, pkg) => Guard.Run("reading stats from the server", () => OnSync(from, pkg)));
     }
 
     [HarmonyPatch(typeof(ZNet), "OnDestroy"), HarmonyPrefix]
-    private static void OnLeave()
+    private static void OnLeave() => Guard.Run("saving stats on leaving", () =>
     {
         SaveNow();
         ResetSession();
-    }
+    });
 
     private static void ResetSession()
     {
@@ -128,7 +130,9 @@ internal static class StatsSync
             if (_unsaved && now - _lastSave >= SaveInterval) SaveNow();
         }
 
-        if (Player.m_localPlayer == null) return;
+        Player me = Player.m_localPlayer;
+        // Right after spawning, the player's id and name aren't set yet; the hello needs both.
+        if (me == null || me.GetPlayerID() == 0L || string.IsNullOrEmpty(me.GetPlayerName())) return;
 
         // Say hello on arrival, and again every few seconds in case one was lost, until the server answers or we give up.
         if (_helloSentAt < 0f || (!_serverHasMod && now - _lastHello >= HelloRetry && now - _helloSentAt < ServerAnswerTimeout))

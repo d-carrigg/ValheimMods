@@ -38,6 +38,7 @@ internal static class StatsWindow
     private static float _scale = 1f;
 
     private static string[] _players = Array.Empty<string>();
+    private static string[] _labels = Array.Empty<string>();
     private static List<Row> _rows = new();
     private static Row _totals;
     private static readonly Dictionary<string, string> Localized = new();
@@ -159,7 +160,7 @@ internal static class StatsWindow
             // Too many players to fit across the screen: header and totals scroll sideways with the rows.
             string first = _tab == Tab.Built ? "Piece" : "Material";
             if (_tooWide) _scroll = GUILayout.BeginScrollView(_scroll, true, false, GUI.skin.horizontalScrollbar, GUI.skin.verticalScrollbar);
-            DrawRow(first, _players, null, "Total", Styles.Header, Styles.HeaderNum);
+            DrawRow(first, _labels, null, "Total", Styles.Header, Styles.HeaderNum);
             if (!_tooWide) _scroll = GUILayout.BeginScrollView(_scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
             for (int i = 0; i < _rows.Count; i++)
             {
@@ -229,8 +230,12 @@ internal static class StatsWindow
     private static void BuildRows()
     {
         StatsStore view = StatsSync.View;
-        // Players known only by id (builds from before BuildStats, not seen since) stay hidden until they join.
-        _players = view.Players.Where(p => !p.StartsWith(Backfill.IdPrefix)).ToArray();
+        // Builders known only by id (builds from before BuildStats, not seen since) come last as
+        // "Unknown 1", "Unknown 2", ... and get their name once they join with BuildStats.
+        var named = view.Players.Where(p => !p.StartsWith(Backfill.IdPrefix)).ToList();
+        var unknown = view.Players.Where(p => p.StartsWith(Backfill.IdPrefix)).ToList();
+        _players = named.Concat(unknown).ToArray();
+        _labels = named.Concat(unknown.Select((_, i) => $"Unknown {i + 1}")).ToArray();
         Category[] cats = _tab == Tab.Built ? new[] { Category.Built }
             : _filter == MaterialFilter.Building ? new[] { Category.BuildMaterials }
             : _filter == MaterialFilter.Crafting ? new[] { Category.CraftMaterials }

@@ -37,6 +37,11 @@ internal static class StatsSync
     private static float _lastSend;
     private static bool _serverHasMod;
 
+    // Private in the game, so called by reflection.
+    private static readonly System.Reflection.MethodInfo GetServerPeerIdMethod = AccessTools.Method(typeof(ZRoutedRpc), "GetServerPeerID");
+
+    private static long ServerPeerId(ZRoutedRpc rpc) => (long)GetServerPeerIdMethod.Invoke(rpc, null);
+
     // Server side
     private static StatsStore _world;
     private static string _worldPath;
@@ -124,7 +129,7 @@ internal static class StatsSync
             _helloSentAt = now;
             var hello = new ZPackage();
             hello.Write(Protocol);
-            rpc.InvokeRoutedRPC(rpc.GetServerPeerID(), RpcHello, hello);
+            rpc.InvokeRoutedRPC(ServerPeerId(rpc), RpcHello, hello);
         }
 
         if (_serverHasMod && !Pending.IsEmpty && now - _lastSend >= SendInterval)
@@ -134,7 +139,7 @@ internal static class StatsSync
             add.Write(Protocol);
             Pending.Write(add);
             Pending.Clear();
-            rpc.InvokeRoutedRPC(rpc.GetServerPeerID(), RpcAdd, add);
+            rpc.InvokeRoutedRPC(ServerPeerId(rpc), RpcAdd, add);
         }
     }
 
